@@ -1,10 +1,21 @@
+.vt-beta-header,
+.vt-beta-footer {
+	hyphens: auto;
+}
+
+.vt-beta-header h1 {
+	white-space: nowrap;
+	font-size: clamp(1rem, 2vw, 2rem);
+	max-width: 100%;
+}
+
 .vt-beta-footer,
 .vt-beta-footer * {
 	color: var(--text-faint) !important;
 	font-size: var(--font-small) !important;
 }
 
-.vt-beta-token {
+.vt-beta-welcome .vt-beta-token {
 	border: none !important;
 	background: none !important;
 }
@@ -19,4 +30,16 @@
 
 .vt-beta-token .setting-item-control input {
 	width: 100% !important;
+}
+
+.vt-beta-tag {
+	padding: var(--size-2-1) var(--size-4-2);
+	border-radius: var(--radius-m);
+	border: 1px solid;
+	display: inline-block;
+	margin-left: var(--size-4-1);
+	transform: rotateZ(5deg) translate(0px, -10px);
+	background: rgba(var(--color-purple-rgb), 0.2);
+	font-size: 0.6em;
+	font-weight: var(--font-medium);
 }

@@ -2,13 +2,17 @@ import VTBetaHelper from "main";
 import { App, PluginSettingTab, Setting } from "obsidian";
 
 export interface VTBetaHelperSettings {
-	autoUpdate: boolean;
 	token: string;
+	autoUpdate: boolean;
+	showUpdateNotification: boolean;
+	showReleaseNotes: boolean;
 }
 
 export const DEFAULT_SETTINGS: VTBetaHelperSettings = {
-	autoUpdate: true,
 	token: "",
+	autoUpdate: true,
+	showUpdateNotification: true,
+	showReleaseNotes: true,
 };
 
 export class VTBetaHelperSettingTab extends PluginSettingTab {
@@ -30,7 +34,7 @@ export class VTBetaHelperSettingTab extends PluginSettingTab {
 		}
 	}
 
-	private displayTokenInput(parentEl: HTMLElement) {
+	private displayTokenInput(parentEl: HTMLElement, filled = false) {
 		new Setting(parentEl)
 			.setName("Access token")
 			.setClass("vt-beta-token")
@@ -42,25 +46,33 @@ export class VTBetaHelperSettingTab extends PluginSettingTab {
 						this.plugin.settings.token = value.trim();
 						await this.plugin.saveSettings();
 					})
+					.setDisabled(filled)
 			)
-			.addButton((button) =>
-				button.setButtonText("Save").onClick(async () => {
-					this.display();
-				})
-			);
+			.addButton((button) => {
+				button
+					.setButtonText(filled ? "Remove" : "Continue")
+					.onClick(async () => {
+						if (filled) {
+							this.plugin.settings.token = "";
+							await this.plugin.saveSettings();
+						}
+						this.display();
+					});
+				if (filled) button.setWarning();
+			});
 	}
 
 	private displayWelcomeScreen(parentEl: HTMLElement) {
 		const containerEl = parentEl.createDiv({ cls: "vt-beta-welcome" });
 		const headerEl = containerEl.createDiv({ cls: "vt-beta-header" });
 		headerEl.innerHTML = `
-        <h1>Welcome to Vertical Tabs Beta</h1>
+        <h1>Welcome to Vertical Tabs <span class="vt-beta-tag">Beta</span></h1>
         <p>
           This plugin will help you install and manage the beta versions of Vertical Tabs.
           To get started, please paste your access token below.
         </p>
       `;
-		this.displayTokenInput(containerEl);
+		this.displayTokenInput(containerEl, false);
 		const footerEl = containerEl.createDiv({ cls: "vt-beta-footer" });
 		footerEl.innerHTML = `
         <p>
@@ -73,12 +85,13 @@ export class VTBetaHelperSettingTab extends PluginSettingTab {
           <a href="https://oxdc.github.io/obsidian-vertical-tabs-docs/beta-program" target="_blank">
             FAQ on beta testing
           </a>
-          carefully before subscribing.
+          carefully before subscribing. Please keep your access token private. Vertical Tabs Beta
+          is for personal use only. Please DO NOT share, sell, or distribute it to anyone.
         </p>
       `;
 	}
 
-	private displayAutoUpdateToggle(parentEl: HTMLElement) {
+	private displayOptions(parentEl: HTMLElement) {
 		new Setting(parentEl)
 			.setName("Auto update")
 			.setDesc("Whether to automatically check and update Vertical Tabs.")
@@ -88,6 +101,35 @@ export class VTBetaHelperSettingTab extends PluginSettingTab {
 					.onChange(async (value) => {
 						this.plugin.settings.autoUpdate = value;
 						await this.plugin.saveSettings();
+						this.display();
+					})
+			);
+
+		if (!this.plugin.settings.autoUpdate) {
+			new Setting(parentEl)
+				.setName("Show update notification")
+				.setDesc(
+					"Whether to show a notification when a new version is available."
+				)
+				.addToggle((toggle) =>
+					toggle
+						.setValue(this.plugin.settings.showUpdateNotification)
+						.onChange(async (value) => {
+							this.plugin.settings.showUpdateNotification = value;
+							await this.plugin.saveSettings();
+						})
+				);
+		}
+
+		new Setting(parentEl)
+			.setName("Show release notes")
+			.setDesc("Whether to show what's new in the latest beta version.")
+			.addToggle((toggle) =>
+				toggle
+					.setValue(this.plugin.settings.showReleaseNotes)
+					.onChange(async (value) => {
+						this.plugin.settings.showReleaseNotes = value;
+						await this.plugin.saveSettings();
 					})
 			);
 	}
@@ -95,10 +137,31 @@ export class VTBetaHelperSettingTab extends PluginSettingTab {
 	private displaySettingsScreen(parentEl: HTMLElement) {
 		const containerEl = parentEl.createDiv({ cls: "vt-beta-settings" });
 		containerEl.innerHTML = `
-      <h1>Vertical Tabs Beta Settings</h1>
-      <p>Welcome onboard! Here you can configure the settings for the Vertical Tabs Beta plugin.</p>
+      <h1>Vertical Tabs <span class="vt-beta-tag">Beta</span></h1>
+      <p>Welcome onboard! And thank you for your support!</p>
     `;
-		this.displayTokenInput(containerEl);
-		this.displayAutoUpdateToggle(containerEl);
+		this.displayOptions(containerEl);
+		new Setting(containerEl).setName("License").setHeading();
+		this.displayTokenInput(containerEl, true);
+		const footerEl = containerEl.createDiv({ cls: "vt-beta-footer" });
+		footerEl.innerHTML = `
+      <p>
+        If you have any trouble, please contact me on
+        <a href="https://ko-fi.com/oxdcq" target="_blank">Ko-fi</a>
+        or report issues on
+        <a href="https://github.com/oxdc/obsidian-vertical-tabs/issues/new/choose" target="_blank">GitHub</a>.
+      </p>
+      <p>
+        To rollback to the public version of Vertical Tabs, please unsubscribe on
+        <a href="https://ko-fi.com/" target="_blank">Ko-fi</a>
+        , uninstall Vertical Tabs Beta and this helper, then reinstall Vertical Tabs from the
+        community plugin store. Your settings may not be compatible with the public version and
+        will not be preserved.
+      </p>
+      <p>
+        Please keep your access token private. Vertical Tabs Beta is for personal use only. Please
+        DO NOT share, sell, or distribute it to anyone.
+      </p>
+    `;
 	}
 }
