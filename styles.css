@@ -1,8 +1,22 @@
-/*
+.vt-beta-footer,
+.vt-beta-footer * {
+	color: var(--text-faint) !important;
+	font-size: var(--font-small) !important;
+}
 
-This CSS file will be included with your plugin, and
-available in the app when your plugin is enabled.
+.vt-beta-token {
+	border: none !important;
+	background: none !important;
+}
 
-If your plugin does not need CSS, delete this file.
+.vt-beta-token .setting-item-info {
+	flex-grow: 0 !important;
+}
 
-*/
+.vt-beta-token .setting-item-control {
+	flex-grow: 1 !important;
+}
+
+.vt-beta-token .setting-item-control input {
+	width: 100% !important;
+}
