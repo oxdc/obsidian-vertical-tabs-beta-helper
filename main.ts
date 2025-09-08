@@ -11,6 +11,10 @@ export default class VTBetaHelper extends Plugin {
 	async onload() {
 		await this.loadSettings();
 		this.addSettingTab(new VTBetaHelperSettingTab(this.app, this));
+		this.registerObsidianProtocolHandler(
+			"vtbetahelper",
+			this.setupHandler.bind(this)
+		);
 	}
 
 	onunload() {}
@@ -25,5 +29,17 @@ export default class VTBetaHelper extends Plugin {
 
 	async saveSettings() {
 		await this.saveData(this.settings);
+	}
+
+	async setupHandler(params: Record<string, string>): Promise<void> {
+		const setting = params["setting"]?.toLowerCase();
+		if (setting !== "setup") return;
+		const accessToken = params["accessToken"];
+		if (typeof accessToken === "string" && accessToken.trim()) {
+			this.settings.token = accessToken.trim();
+			await this.saveSettings();
+		}
+		this.app.setting.open();
+		this.app.setting.openTabById(this.manifest.id);
 	}
 }
