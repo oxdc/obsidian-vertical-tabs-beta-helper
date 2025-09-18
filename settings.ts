@@ -1,5 +1,6 @@
 import VTBetaHelper from "main";
 import { App, PluginSettingTab, Setting } from "obsidian";
+import { stripTokenDashes } from "utils";
 
 export interface VTBetaHelperSettings {
 	token: string;
@@ -43,7 +44,7 @@ export class VTBetaHelperSettingTab extends PluginSettingTab {
 					.setPlaceholder("Enter your access token")
 					.setValue(this.plugin.settings.token)
 					.onChange(async (value) => {
-						this.plugin.settings.token = value.trim();
+						this.plugin.settings.token = stripTokenDashes(value);
 						await this.plugin.saveSettings();
 					})
 					.setDisabled(filled)

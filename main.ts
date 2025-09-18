@@ -4,6 +4,7 @@ import {
 	VTBetaHelperSettingTab,
 	DEFAULT_SETTINGS,
 } from "./settings";
+import { stripTokenDashes } from "utils";
 
 export default class VTBetaHelper extends Plugin {
 	settings: VTBetaHelperSettings;
@@ -36,7 +37,7 @@ export default class VTBetaHelper extends Plugin {
 		if (setting !== "setup") return;
 		const accessToken = params["accessToken"];
 		if (typeof accessToken === "string" && accessToken.trim()) {
-			this.settings.token = accessToken.trim();
+			this.settings.token = stripTokenDashes(accessToken);
 			await this.saveSettings();
 		}
 		this.app.setting.open();
