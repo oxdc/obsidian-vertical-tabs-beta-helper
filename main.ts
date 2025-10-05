@@ -43,4 +43,8 @@ export default class VTBetaHelper extends Plugin {
 		this.app.setting.open();
 		this.app.setting.openTabById(this.manifest.id);
 	}
+
+	async requestSecurityContext() {
+		return !this.settings.hideSecurityInfo;
+	}
 }

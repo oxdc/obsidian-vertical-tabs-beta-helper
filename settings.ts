@@ -1,5 +1,6 @@
 import VTBetaHelper from "main";
 import { App, PluginSettingTab, Setting } from "obsidian";
+import { SecurityWarningConfirmationModal } from "./warning";
 import { stripTokenDashes } from "utils";
 
 export interface VTBetaHelperSettings {
@@ -7,6 +8,7 @@ export interface VTBetaHelperSettings {
 	autoUpdate: boolean;
 	showUpdateNotification: boolean;
 	showReleaseNotes: boolean;
+	hideSecurityInfo: boolean;
 }
 
 export const DEFAULT_SETTINGS: VTBetaHelperSettings = {
@@ -14,6 +16,7 @@ export const DEFAULT_SETTINGS: VTBetaHelperSettings = {
 	autoUpdate: true,
 	showUpdateNotification: true,
 	showReleaseNotes: true,
+	hideSecurityInfo: false,
 };
 
 export class VTBetaHelperSettingTab extends PluginSettingTab {
@@ -131,6 +134,33 @@ export class VTBetaHelperSettingTab extends PluginSettingTab {
 					.onChange(async (value) => {
 						this.plugin.settings.showReleaseNotes = value;
 						await this.plugin.saveSettings();
+					})
+			);
+
+		new Setting(parentEl)
+			.setName("Hide security warnings")
+			.setDesc("Whether to hide the security warnings.")
+			.addToggle((toggle) =>
+				toggle
+					.setValue(this.plugin.settings.hideSecurityInfo)
+					.onChange(async (value) => {
+						const updateAndSave = async () => {
+							this.plugin.settings.hideSecurityInfo = value;
+							await this.plugin.saveSettings();
+							this.display();
+						};
+
+						if (value) {
+							// To enable, show confirmation modal
+							new SecurityWarningConfirmationModal(this.app, {
+								onConfirm: updateAndSave,
+								onCancel: () => toggle.setValue(false),
+							}).open();
+						} else {
+							// To disable, no confirmation needed
+							await updateAndSave();
+							return;
+						}
 					})
 			);
 	}

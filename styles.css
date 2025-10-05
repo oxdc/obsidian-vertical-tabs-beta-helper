@@ -43,3 +43,34 @@
 	font-size: 0.6em;
 	font-weight: var(--font-medium);
 }
+
+.vt-beta-confirmation-phrase {
+	font-weight: var(--font-medium);
+	font-family: var(--font-monospace);
+	background: var(--background-secondary);
+	padding: var(--size-2-1) var(--size-4-2);
+	border: 1px solid;
+	text-align: center;
+	user-select: none !important;
+}
+
+.vt-beta-confirmation-input input {
+	width: 100%;
+}
+
+.vt-beta-confirmation-input .setting-item-info {
+	flex-grow: 0;
+	flex-shrink: 0;
+}
+
+.vt-beta-confirmation-input .setting-item-control {
+	flex-grow: 1;
+	flex-shrink: 0;
+}
+
+.vt-beta-security-warning-modal-button-container {
+	display: flex;
+	justify-content: flex-end;
+	gap: var(--size-4-2);
+	margin-top: var(--size-4-2);
+}
