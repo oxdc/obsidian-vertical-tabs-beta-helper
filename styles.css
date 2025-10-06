@@ -28,6 +28,10 @@
 	flex-grow: 1 !important;
 }
 
+.vt-beta-token .setting-item-control button {
+	width: unset !important;
+}
+
 .vt-beta-token .setting-item-control input {
 	width: 100% !important;
 }

@@ -1,10 +1,10 @@
-import { Plugin } from "obsidian";
+import { Notice, Plugin } from "obsidian";
 import {
 	VTBetaHelperSettings,
 	VTBetaHelperSettingTab,
 	DEFAULT_SETTINGS,
 } from "./settings";
-import { stripTokenDashes } from "./common/utils";
+import { validateToken, normalizeToken } from "./services/auth";
 
 export default class VTBetaHelper extends Plugin {
 	settings: VTBetaHelperSettings;
@@ -37,8 +37,13 @@ export default class VTBetaHelper extends Plugin {
 		if (setting !== "setup") return;
 		const accessToken = params["accessToken"];
 		if (typeof accessToken === "string" && accessToken.trim()) {
-			this.settings.token = stripTokenDashes(accessToken);
-			await this.saveSettings();
+			const { isValid, errorMessage } = await validateToken(accessToken);
+			if (isValid) {
+				this.settings.token = normalizeToken(accessToken);
+				await this.saveSettings();
+			} else {
+				new Notice(errorMessage, 10000);
+			}
 		}
 		this.app.setting.open();
 		this.app.setting.openTabById(this.manifest.id);
