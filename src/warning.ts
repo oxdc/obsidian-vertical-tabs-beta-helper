@@ -10,7 +10,7 @@ interface SecurityWarningConfirmationModalProps {
 export class SecurityWarningConfirmationModal extends Modal {
 	private readonly onConfirm: () => void;
 	private readonly onCancel: () => void;
-	private isConfirmed: boolean = false;
+	private isConfirmed = false;
 
 	constructor(app: App, props: SecurityWarningConfirmationModalProps) {
 		super(app);

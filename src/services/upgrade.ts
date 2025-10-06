@@ -7,7 +7,7 @@ import {
 	randomString,
 	sleep,
 } from "../common/utils";
-import * as JSZip from "jszip";
+import JSZip from "jszip";
 
 const VERTICAL_TABS_ID = "vertical-tabs";
 const MAX_RETRIES = 5;
