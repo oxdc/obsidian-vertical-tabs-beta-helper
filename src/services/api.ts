@@ -3,9 +3,9 @@ import type {
 	GetSubscriptionResponse,
 	ListBuildsResponse,
 	GetBuildResponse,
-	BuildRequestResponse,
-	ErrorResponse,
+	BuildRequestNotReadyResponse,
 	DownloadBuildResult,
+	DownloadBuildSuccess,
 } from "./response";
 
 const BETA_SERVER = process.env.BETA_SERVER;
@@ -15,6 +15,17 @@ export enum ApiError {
 	UnknownError = "UnknownError",
 	Unauthorized = "Unauthorized",
 	NotFound = "NotFound",
+	ServerError = "ServerError",
+	BuildNotReady = "BuildNotReady",
+}
+
+export class ApiException extends Error {
+	constructor(
+		public readonly error: ApiError,
+		public readonly context: Record<string, unknown> = {}
+	) {
+		super(`API error: ${error}`);
+	}
 }
 
 export class ApiService {
@@ -68,29 +79,24 @@ export class ApiService {
 			case 200: {
 				const contentType = response.headers["content-type"];
 				const sha256 = response.headers["x-sha256"];
-
 				if (contentType === "application/zip" && sha256) {
-					return {
-						response,
-						sha256,
-					};
+					return { response, sha256 } as DownloadBuildSuccess;
 				}
-				throw ApiError.UnknownError;
+				throw new ApiException(ApiError.UnknownError);
 			}
 			case 202: {
-				const jsonResponse = response.json as BuildRequestResponse;
-				return jsonResponse;
+				const { data } = response.json as BuildRequestNotReadyResponse;
+				const { retry_after } = data;
+				throw new ApiException(ApiError.BuildNotReady, { retry_after });
 			}
 			case 401:
-				throw ApiError.Unauthorized;
+				throw new ApiException(ApiError.Unauthorized);
 			case 404:
-				throw ApiError.NotFound;
-			case 500: {
-				const errorResponse = response.json as ErrorResponse;
-				return errorResponse;
-			}
+				throw new ApiException(ApiError.NotFound);
+			case 500:
+				throw new ApiException(ApiError.ServerError);
 			default:
-				throw ApiError.UnknownError;
+				throw new ApiException(ApiError.UnknownError);
 		}
 	}
 }

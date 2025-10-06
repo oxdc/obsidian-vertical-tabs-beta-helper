@@ -41,28 +41,17 @@ type _GetBuildResponse = {
 };
 export type GetBuildResponse = _GetBuildResponse | ErrorResponse;
 
-export type BuildRequestAcceptedResponse = {
-	success: false;
-	code: "BUILD_IN_PROGRESS";
-	error: string;
-};
-
 export type PendingJobDetails = {
 	tag: string;
-	dispatched_at: string;
-	expires_at: string;
+	retry_after: number;
 };
 
-export type BuildRequestIsProcessingResponse = {
+export type BuildRequestNotReadyResponse = {
 	success: false;
 	code: "BUILD_IN_PROGRESS";
 	error: string;
 	data: PendingJobDetails;
 };
-
-export type BuildRequestResponse =
-	| BuildRequestAcceptedResponse
-	| BuildRequestIsProcessingResponse;
 
 export type DownloadBuildSuccess = {
 	response: RequestUrlResponse;
@@ -71,6 +60,11 @@ export type DownloadBuildSuccess = {
 
 export type DownloadBuildResult =
 	| DownloadBuildSuccess
-	| BuildRequestAcceptedResponse
-	| BuildRequestIsProcessingResponse
+	| BuildRequestNotReadyResponse
 	| ErrorResponse;
+
+export function isDownloadBuildSuccess(
+	result: DownloadBuildResult
+): result is DownloadBuildSuccess {
+	return "response" in result && "sha256" in result;
+}

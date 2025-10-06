@@ -1,7 +1,7 @@
 import VTBetaHelper from "./main";
 import { App, PluginSettingTab, Setting } from "obsidian";
 import { SecurityWarningConfirmationModal } from "./warning";
-import { stripTokenDashes } from "./utils";
+import { stripTokenDashes } from "./common/utils";
 
 export interface VTBetaHelperSettings {
 	token: string;

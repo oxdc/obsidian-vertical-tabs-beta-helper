@@ -4,7 +4,7 @@ import {
 	VTBetaHelperSettingTab,
 	DEFAULT_SETTINGS,
 } from "./settings";
-import { stripTokenDashes } from "./utils";
+import { stripTokenDashes } from "./common/utils";
 
 export default class VTBetaHelper extends Plugin {
 	settings: VTBetaHelperSettings;
