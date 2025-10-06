@@ -182,7 +182,7 @@ export class VTBetaHelperSettingTab extends PluginSettingTab {
 						if (value) {
 							// To enable, show confirmation modal
 							new SecurityWarningConfirmationModal(this.app, {
-								onConfirm: updateAndSave,
+								onConfirm: () => updateAndSave(),
 								onCancel: () => toggle.setValue(false),
 							}).open();
 						} else {

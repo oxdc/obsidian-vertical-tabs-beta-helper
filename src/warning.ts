@@ -10,6 +10,7 @@ interface SecurityWarningConfirmationModalProps {
 export class SecurityWarningConfirmationModal extends Modal {
 	private readonly onConfirm: () => void;
 	private readonly onCancel: () => void;
+	private isConfirmed: boolean = false;
 
 	constructor(app: App, props: SecurityWarningConfirmationModalProps) {
 		super(app);
@@ -77,6 +78,7 @@ export class SecurityWarningConfirmationModal extends Modal {
 		confirmButton.disabled = true;
 		confirmButton.onclick = () => {
 			if (inputEl.value === CONFIRMATION_PHRASE) {
+				this.isConfirmed = true;
 				this.onConfirm();
 				this.close();
 			}
@@ -94,7 +96,7 @@ export class SecurityWarningConfirmationModal extends Modal {
 	}
 
 	onClose() {
-		this.onCancel();
+		if (!this.isConfirmed) this.onCancel();
 		const { contentEl } = this;
 		contentEl.empty();
 	}
