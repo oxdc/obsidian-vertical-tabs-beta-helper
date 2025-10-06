@@ -77,12 +77,36 @@ export class ApiService {
 		const response = await this.request(
 			`/builds?limit=${limit}&offset=${offset}`
 		);
-		return response.json as ListBuildsResponse;
+		switch (response.status) {
+			case 200:
+				return response.json as ListBuildsResponse;
+			case 401:
+				throw new ApiException(ApiError.Unauthorized);
+			case 429:
+				throw new ApiException(ApiError.RateLimited);
+			case 500:
+				throw new ApiException(ApiError.ServerError);
+			default:
+				throw new ApiException(ApiError.UnknownError);
+		}
 	}
 
 	async getBuild(tag: string): Promise<GetBuildResponse> {
 		const response = await this.request(`/builds/${tag}`);
-		return response.json as GetBuildResponse;
+		switch (response.status) {
+			case 200:
+				return response.json as GetBuildResponse;
+			case 401:
+				throw new ApiException(ApiError.Unauthorized);
+			case 404:
+				throw new ApiException(ApiError.NotFound);
+			case 429:
+				throw new ApiException(ApiError.RateLimited);
+			case 500:
+				throw new ApiException(ApiError.ServerError);
+			default:
+				throw new ApiException(ApiError.UnknownError);
+		}
 	}
 
 	async downloadBuild(tag: string): Promise<DownloadBuildResult> {
