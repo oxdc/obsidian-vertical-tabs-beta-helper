@@ -17,6 +17,7 @@ export enum ApiError {
 	NotFound = "NotFound",
 	ServerError = "ServerError",
 	BuildNotReady = "BuildNotReady",
+	RateLimited = "RateLimited",
 }
 
 export class ApiException extends Error {
@@ -33,7 +34,7 @@ export class ApiService {
 	private token: string;
 
 	constructor(token: string) {
-		this.baseURL = `${BETA_SERVER}/api/v1/user`;
+		this.baseURL = `https://${BETA_SERVER}/api/v1/user`;
 		this.token = token;
 	}
 
@@ -48,13 +49,25 @@ export class ApiService {
 				Authorization: `Bearer ${this.token}`,
 				"User-Agent": `vtbetahelper/${USER_AGENT_VERSION}`,
 			},
+			throw: false,
 		});
 		return response;
 	}
 
 	async getSubscription(): Promise<GetSubscriptionResponse> {
 		const response = await this.request("/subscription");
-		return response.json as GetSubscriptionResponse;
+		switch (response.status) {
+			case 200:
+				return response.json as GetSubscriptionResponse;
+			case 401:
+				throw new ApiException(ApiError.Unauthorized);
+			case 429:
+				throw new ApiException(ApiError.RateLimited);
+			case 500:
+				throw new ApiException(ApiError.ServerError);
+			default:
+				throw new ApiException(ApiError.UnknownError);
+		}
 	}
 
 	async listBuilds(
@@ -93,6 +106,8 @@ export class ApiService {
 				throw new ApiException(ApiError.Unauthorized);
 			case 404:
 				throw new ApiException(ApiError.NotFound);
+			case 429:
+				throw new ApiException(ApiError.RateLimited);
 			case 500:
 				throw new ApiException(ApiError.ServerError);
 			default:

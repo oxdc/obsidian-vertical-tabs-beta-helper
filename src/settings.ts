@@ -1,7 +1,13 @@
 import VTBetaHelper from "./main";
-import { App, PluginSettingTab, Setting } from "obsidian";
+import {
+	App,
+	Notice,
+	PluginSettingTab,
+	Setting,
+	TextComponent,
+} from "obsidian";
 import { SecurityWarningConfirmationModal } from "./warning";
-import { stripTokenDashes } from "./common/utils";
+import { validateToken } from "./services/auth";
 
 export interface VTBetaHelperSettings {
 	token: string;
@@ -39,29 +45,52 @@ export class VTBetaHelperSettingTab extends PluginSettingTab {
 	}
 
 	private displayTokenInput(parentEl: HTMLElement, filled = false) {
+		let token = "";
+		let textEl: TextComponent | null;
+		let inputEl: HTMLInputElement | null;
+
+		const removeToken = async () => {
+			this.plugin.settings.token = "";
+			await this.plugin.saveSettings();
+			this.display();
+		};
+
+		const setToken = async () => {
+			textEl?.setDisabled(true);
+			const { isValid, errorMessage } = await validateToken(token);
+			textEl?.setDisabled(false);
+			if (isValid) {
+				this.plugin.settings.token = token;
+				await this.plugin.saveSettings();
+				this.display();
+			} else {
+				if (inputEl) {
+					inputEl.setCustomValidity(errorMessage);
+					inputEl.reportValidity();
+				} else {
+					new Notice(errorMessage);
+				}
+			}
+		};
+
 		new Setting(parentEl)
 			.setName("Access token")
 			.setClass("vt-beta-token")
-			.addText((text) =>
-				text
-					.setPlaceholder("Enter your access token")
+			.addText((text) => {
+				text.setPlaceholder("Enter your access token")
 					.setValue(this.plugin.settings.token)
-					.onChange(async (value) => {
-						this.plugin.settings.token = stripTokenDashes(value);
-						await this.plugin.saveSettings();
+					.onChange((value) => {
+						token = value;
+						if (inputEl) inputEl.setCustomValidity("");
 					})
-					.setDisabled(filled)
-			)
+					.setDisabled(filled);
+				textEl = text;
+				inputEl = text.inputEl;
+			})
 			.addButton((button) => {
 				button
 					.setButtonText(filled ? "Remove" : "Continue")
-					.onClick(async () => {
-						if (filled) {
-							this.plugin.settings.token = "";
-							await this.plugin.saveSettings();
-						}
-						this.display();
-					});
+					.onClick(async () => (filled ? removeToken() : setToken()));
 				if (filled) button.setWarning();
 			});
 	}

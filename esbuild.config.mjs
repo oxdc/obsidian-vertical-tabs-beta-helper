@@ -1,6 +1,10 @@
 import esbuild from "esbuild";
 import process from "process";
 import builtins from "builtin-modules";
+import dotenv from "dotenv";
+import { existsSync } from "fs";
+
+if (existsSync(".env")) dotenv.config();
 
 const banner =
 `/*
@@ -14,6 +18,10 @@ const prod = (process.argv[2] === "production");
 const context = await esbuild.context({
 	banner: {
 		js: banner,
+	},
+	define: {
+		"process.env.BETA_SERVER": JSON.stringify(process.env.BETA_SERVER),
+		"process.env.USER_AGENT_VERSION": JSON.stringify(process.env.USER_AGENT_VERSION),
 	},
 	entryPoints: ["src/main.ts"],
 	bundle: true,

@@ -39,8 +39,8 @@ async function downloadBuild(apiService: ApiService, tag: string): Promise<Downl
 						continue; // Retry
 					}
 				}
-				// Don't retry on logical errors (auth, not found)
-				else if (RETRYABLE_ERRORS.includes(error.error)) {
+				// Don't retry on non-retryable errors (auth, not found)
+				else if (!RETRYABLE_ERRORS.includes(error.error)) {
 					throw new UpgradeException(`Failed to download build '${tag}': ${e(error)}`);
 				}
 			}
