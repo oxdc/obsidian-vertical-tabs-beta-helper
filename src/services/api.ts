@@ -74,9 +74,8 @@ export class ApiService {
 		limit: number,
 		offset: number
 	): Promise<ListBuildsResponse> {
-		const response = await this.request(
-			`/builds?limit=${limit}&offset=${offset}`
-		);
+		const pagination = `limit=${limit}&offset=${offset}`;
+		const response = await this.request(`/builds?${pagination}`);
 		switch (response.status) {
 			case 200:
 				return response.json as ListBuildsResponse;
