@@ -160,3 +160,9 @@
 .vt-beta-builds .setting-item.pagination .setting-item-control {
 	flex-grow: 1 !important;
 }
+
+.vt-beta-release-note {
+	max-height: 350px;
+	overflow: scroll;
+	padding: 0 var(--size-4-2) !important;
+}

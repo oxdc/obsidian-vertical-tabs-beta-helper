@@ -12,6 +12,7 @@ import { listBuilds } from "./services/list";
 import moment from "moment";
 import { BuildData } from "./services/response";
 import { errorToString as e } from "./common/utils";
+import { ReleaseNoteModal } from "./release_note";
 
 const PAGE_SIZE = 5;
 
@@ -159,8 +160,9 @@ export class VTBetaHelperSettingTab extends PluginSettingTab {
 				button
 					.setIcon("info")
 					.setTooltip("Release note")
+					.setDisabled(build.release_note === null)
 					.onClick(async () => {
-						// await this.plugin.showReleaseNote(build.tag);
+						new ReleaseNoteModal(this.app, build).open();
 					});
 			});
 			buildEl.addExtraButton((button) => {
