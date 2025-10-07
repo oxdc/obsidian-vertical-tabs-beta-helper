@@ -7,7 +7,8 @@ import {
 	TextComponent,
 } from "obsidian";
 import { SecurityWarningConfirmationModal } from "./warning";
-import { validateToken } from "./services/auth";
+import { refreshSubscription, validateToken } from "./services/auth";
+import moment from "moment";
 
 export interface VTBetaHelperSettings {
 	token: string;
@@ -52,6 +53,7 @@ export class VTBetaHelperSettingTab extends PluginSettingTab {
 		const removeToken = async () => {
 			this.plugin.settings.token = "";
 			await this.plugin.saveSettings();
+			this.plugin.stopUpdateChecker();
 			this.display();
 		};
 
@@ -62,6 +64,7 @@ export class VTBetaHelperSettingTab extends PluginSettingTab {
 			if (isValid) {
 				this.plugin.settings.token = token;
 				await this.plugin.saveSettings();
+				this.plugin.startUpdateChecker();
 				this.display();
 			} else {
 				if (inputEl) {
@@ -134,6 +137,11 @@ export class VTBetaHelperSettingTab extends PluginSettingTab {
 					.onChange(async (value) => {
 						this.plugin.settings.autoUpdate = value;
 						await this.plugin.saveSettings();
+						if (value) {
+							this.plugin.startUpdateChecker();
+						} else {
+							this.plugin.stopUpdateChecker();
+						}
 						this.display();
 					})
 			);
@@ -194,15 +202,51 @@ export class VTBetaHelperSettingTab extends PluginSettingTab {
 			);
 	}
 
+	private async displaySubscriptionStatus(parentEl: HTMLElement) {
+		const token = this.plugin.settings.token;
+		const subscription = await refreshSubscription(token);
+		const statusEl = parentEl.createDiv({ cls: "vt-beta-subscription" });
+
+		if (!subscription || !subscription.success) {
+			statusEl.toggleClass("mod-error", true);
+			statusEl.setText("Unable to load subscription.");
+			return;
+		}
+
+		statusEl.toggleClass("mod-error", false);
+
+		const { email, expires_at } = subscription.data;
+		const expiryDate = moment(expires_at);
+		const expiryDateText = expiryDate.format("L");
+
+		const subscriberEl = statusEl.createDiv({
+			cls: "vt-beta-subscription-detail",
+		});
+		subscriberEl.appendText("Issued to ");
+		subscriberEl.createEl("code", { cls: "mod-info", text: email });
+
+		const expiryEl = statusEl.createDiv({
+			cls: "vt-beta-subscription-detail",
+		});
+		expiryEl.appendText("Valid until ");
+		expiryEl.createEl("code", { cls: "mod-info", text: expiryDateText });
+	}
+
 	private displaySettingsScreen(parentEl: HTMLElement) {
 		const containerEl = parentEl.createDiv({ cls: "vt-beta-settings" });
 		containerEl.innerHTML = `
       <h1>Vertical Tabs <span class="vt-beta-tag">Beta</span></h1>
       <p>Welcome onboard! And thank you for your support!</p>
     `;
+
+		new Setting(containerEl).setName("Options").setHeading();
 		this.displayOptions(containerEl);
+
 		new Setting(containerEl).setName("License").setHeading();
 		this.displayTokenInput(containerEl, true);
+		const subscriptionEl = containerEl.createDiv();
+		this.displaySubscriptionStatus(subscriptionEl);
+
 		const footerEl = containerEl.createDiv({ cls: "vt-beta-footer" });
 		footerEl.innerHTML = `
       <p>

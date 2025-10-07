@@ -78,3 +78,21 @@
 	gap: var(--size-4-2);
 	margin-top: var(--size-4-2);
 }
+
+.vt-beta-subscription-detail {
+	font-size: var(--font-small);
+	padding-bottom: var(--size-2-2);
+}
+
+.vt-beta-subscription-detail .mod-info {
+	padding: var(--size-2-1) var(--size-2-2);
+	word-break: break-all;
+}
+
+.vt-beta-subscription-detail .mod-error {
+	color: var(--text-error);
+}
+
+.vt-beta-subscription-detail:not(.mod-error) {
+	color: var(--text-accent);
+}
