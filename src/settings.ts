@@ -143,7 +143,8 @@ export class VTBetaHelperSettingTab extends PluginSettingTab {
 	private displayBuildList(
 		parentEl: HTMLElement,
 		builds: BuildData[],
-		hasMore: boolean
+		hasMore: boolean,
+		total: number
 	) {
 		const currentVersion = this.plugin.getCurrentVersion();
 		parentEl.createDiv(); // dummy div for consistent visual styles
@@ -184,10 +185,21 @@ export class VTBetaHelperSettingTab extends PluginSettingTab {
 			});
 		}
 
+		const totalPages = Math.ceil(total / PAGE_SIZE);
 		const paginationEl = new Setting(parentEl);
 		paginationEl.addExtraButton((button) => {
 			button
-				.setIcon("arrow-left")
+				.setIcon("chevrons-left")
+				.setTooltip("First page")
+				.setDisabled(this.currentPage === 0)
+				.onClick(() => {
+					this.currentPage = 0;
+					this.display();
+				});
+		});
+		paginationEl.addExtraButton((button) => {
+			button
+				.setIcon("chevron-left")
 				.setTooltip("Previous page")
 				.setDisabled(this.currentPage === 0)
 				.onClick(() => {
@@ -197,13 +209,26 @@ export class VTBetaHelperSettingTab extends PluginSettingTab {
 					}
 				});
 		});
+		paginationEl.controlEl.createSpan({
+			text: `${this.currentPage + 1} / ${totalPages}`,
+		});
 		paginationEl.addExtraButton((button) => {
 			button
-				.setIcon("arrow-right")
+				.setIcon("chevron-right")
 				.setTooltip("Next page")
 				.setDisabled(!hasMore)
 				.onClick(() => {
 					this.currentPage++;
+					this.display();
+				});
+		});
+		paginationEl.addExtraButton((button) => {
+			button
+				.setIcon("chevrons-right")
+				.setTooltip("Last page")
+				.setDisabled(!hasMore)
+				.onClick(() => {
+					this.currentPage = totalPages - 1;
 					this.display();
 				});
 		});
@@ -236,7 +261,7 @@ export class VTBetaHelperSettingTab extends PluginSettingTab {
 			}
 			const { data, has_more } = response;
 			buildsEl.empty();
-			this.displayBuildList(buildsEl, data, has_more);
+			this.displayBuildList(buildsEl, data, has_more, response.total);
 		} catch (error) {
 			buildsEl.empty();
 			this.displayErrorAndRetryButton(buildsEl, error);
