@@ -189,7 +189,9 @@ export class VTBetaHelperSettingTab extends PluginSettingTab {
 		}
 
 		const totalPages = Math.ceil(total / PAGE_SIZE);
-		const paginationEl = new Setting(parentEl).setNoInfo();
+		const paginationEl = new Setting(parentEl)
+			.setNoInfo()
+			.setClass("pagination");
 		paginationEl.addExtraButton((button) => {
 			button
 				.setIcon("chevrons-left")
@@ -245,6 +247,13 @@ export class VTBetaHelperSettingTab extends PluginSettingTab {
 		});
 	}
 
+	private displayLoadingIndicator(parentEl: HTMLElement, text: string) {
+		const loadingEl = parentEl.createDiv({ cls: "vt-beta-loading" });
+		const loadingTextEl = loadingEl.createEl("p", { cls: "mod-loading" });
+		loadingTextEl.createSpan({ cls: "vt-loading-icon" });
+		loadingTextEl.appendText(text);
+	}
+
 	private async displayAvailableBuilds(parentEl: HTMLElement) {
 		const token = this.plugin.settings.token;
 		const buildsEl = parentEl.createDiv({ cls: "vt-beta-builds" });
@@ -253,8 +262,7 @@ export class VTBetaHelperSettingTab extends PluginSettingTab {
 			return;
 		}
 
-		const loadingEl = buildsEl.createDiv({ cls: "vt-beta-loading" });
-		loadingEl.createEl("p", { text: "Loading builds..." });
+		this.displayLoadingIndicator(buildsEl, "Loading builds...");
 
 		try {
 			const offset = this.currentPage * PAGE_SIZE;
@@ -343,7 +351,7 @@ export class VTBetaHelperSettingTab extends PluginSettingTab {
 
 		new Setting(parentEl)
 			.setName("Hide security warnings")
-			.setDesc("Whether to hide the security warnings.")
+			.setDesc("Disable beta version integrity check.")
 			.addToggle((toggle) =>
 				toggle
 					.setValue(this.plugin.settings.hideSecurityInfo)
@@ -371,7 +379,14 @@ export class VTBetaHelperSettingTab extends PluginSettingTab {
 
 	private async displaySubscriptionStatus(parentEl: HTMLElement) {
 		const token = this.plugin.settings.token;
+
+		this.displayLoadingIndicator(
+			parentEl,
+			"Fetching subscription status..."
+		);
+
 		const subscription = await refreshSubscription(token);
+		parentEl.empty();
 		const statusEl = parentEl.createDiv({ cls: "vt-beta-subscription" });
 
 		if (!subscription || !subscription.success) {
@@ -399,6 +414,15 @@ export class VTBetaHelperSettingTab extends PluginSettingTab {
 		expiryEl.createEl("code", { cls: "mod-info", text: expiryDateText });
 	}
 
+	private displayRefreshButton(parentEl: Setting) {
+		parentEl.addExtraButton((button) => {
+			button
+				.setIcon("refresh-cw")
+				.setTooltip("Refresh")
+				.onClick(() => this.display());
+		});
+	}
+
 	private displaySettingsScreen(parentEl: HTMLElement) {
 		const containerEl = parentEl.createDiv({ cls: "vt-beta-settings" });
 		containerEl.innerHTML = `
@@ -406,7 +430,9 @@ export class VTBetaHelperSettingTab extends PluginSettingTab {
       <p>Welcome onboard! And thank you for your support!</p>
     `;
 
-		new Setting(containerEl).setName("Available builds").setHeading();
+		const buildsHeadingEl = new Setting(containerEl);
+		buildsHeadingEl.setName("Available builds").setHeading();
+		this.displayRefreshButton(buildsHeadingEl);
 		this.displayAvailableBuilds(containerEl);
 
 		new Setting(containerEl).setName("Options").setHeading();

@@ -97,7 +97,12 @@
 	color: var(--text-accent);
 }
 
-.vt-beta-builds .setting-item-control .mod-loading {
+.vt-beta-builds .setting-item-control .mod-loading svg {
+	visibility: hidden !important;
+}
+
+.vt-beta-builds .setting-item-control .mod-loading,
+.vt-loading-icon {
 	color: transparent;
 	position: relative;
 	white-space: nowrap;
@@ -105,11 +110,12 @@
 	pointer-events: none;
 }
 
-.vt-beta-builds .setting-item-control .mod-loading svg {
-	visibility: hidden !important;
+.vt-loading-icon {
+	margin-right: var(--size-4-6);
 }
 
-.vt-beta-builds .setting-item-control .mod-loading::after {
+.vt-beta-builds .setting-item-control .mod-loading::after,
+.vt-loading-icon::after {
 	content: "";
 	position: absolute;
 	width: 12px;
@@ -120,7 +126,7 @@
 	bottom: 0;
 	margin: auto;
 	border: 2px solid transparent;
-	border-top-color: var(--text-accent);
+	border-top-color: var(--text-normal);
 	border-radius: 50%;
 	animation: spin 1s ease infinite;
 }
@@ -129,4 +135,28 @@
 	content: "(current)";
 	color: var(--text-accent) !important;
 	margin-left: var(--size-4-2);
+}
+
+.vt-beta-builds .setting-item {
+	flex-direction: row !important;
+	align-items: center !important;
+}
+
+.vt-beta-builds .setting-item .setting-item-info {
+	flex-grow: 1 !important;
+	flex-shrink: 1 !important;
+}
+
+.vt-beta-builds .setting-item-control {
+	margin-top: 0 !important;
+	flex-grow: 0 !important;
+	width: unset !important;
+}
+
+.vt-beta-builds .setting-item.pagination {
+	justify-content: flex-end;
+}
+
+.vt-beta-builds .setting-item.pagination .setting-item-control {
+	flex-grow: 1 !important;
 }

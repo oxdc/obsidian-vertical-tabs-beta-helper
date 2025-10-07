@@ -26,17 +26,8 @@ export class SecurityWarningConfirmationModal extends Modal {
 			cls: "vt-beta-security-warning",
 		});
 		warningDiv.createEl("p", {
-			text: `You are about to disable security warnings that protect you from potentially
-						 modified or tampered plugin files.`,
-		});
-		warningDiv.createEl("p", {
-			text: `Disabling these warnings may expose your installation to security risks. You
-			       should only proceed if you understand the implications and have intentionally
-						 modified the plugin files.`,
-		});
-		warningDiv.createEl("p", {
-			text: `For custom styling, it's recommended to use Obsidian's CSS snippets instead of
-						 modifying plugin files directly.`,
+			text: `You are about to disable security warnings. Only proceed if you understand the
+			       implications and accept the risk.`,
 		});
 
 		const confirmationDiv = contentEl.createDiv({
