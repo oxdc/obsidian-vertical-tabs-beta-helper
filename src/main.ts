@@ -5,19 +5,13 @@ import {
 	DEFAULT_SETTINGS,
 } from "./settings";
 import { validateToken, normalizeToken } from "./services/auth";
-import { ApiService } from "./services/api";
 import { upgrade } from "./services/upgrade";
-import { BuildData } from "./services/response";
+import { listBuilds } from "./services/list";
 import { errorToString as e } from "./common/utils";
 
-const UPDATE_CHECK_INTERVAL = 1000 * 60 * 60; // 1 hour
 const MESSAGE_INTERVAL = 10000; // 10 seconds
 const VERTICAL_TABS_ID = "vertical-tabs";
-
-type GetBuildsParams = {
-	limit: number;
-	offset: number;
-};
+const HOUR = 1000 * 60 * 60;
 
 export default class VTBetaHelper extends Plugin {
 	settings: VTBetaHelperSettings;
@@ -87,7 +81,7 @@ export default class VTBetaHelper extends Plugin {
 		this.updateCheckInterval = this.registerInterval(
 			window.setInterval(
 				() => this.checkForUpdates(),
-				UPDATE_CHECK_INTERVAL
+				this.settings.updateCheckInterval * HOUR
 			)
 		);
 	}
@@ -96,25 +90,6 @@ export default class VTBetaHelper extends Plugin {
 		if (this.updateCheckInterval === null) return;
 		window.clearInterval(this.updateCheckInterval);
 		this.updateCheckInterval = null;
-	}
-
-	// Public - Builds
-
-	async getBuilds(params: GetBuildsParams): Promise<BuildData[]> {
-		if (!this.settings.token) return [];
-		try {
-			const { limit, offset } = params;
-			const apiService = new ApiService(this.settings.token);
-			const response = await apiService.listBuilds(limit, offset);
-			if (response.success) return response.data;
-		} catch (error) {
-			new Notice(
-				"Failed to fetch available Vertical Tabs Beta builds: " +
-					e(error),
-				MESSAGE_INTERVAL
-			);
-		}
-		return [];
 	}
 
 	getCurrentVersion(): string | null {
@@ -127,9 +102,9 @@ export default class VTBetaHelper extends Plugin {
 	private async checkForUpdates(): Promise<void> {
 		if (!this.settings.token) return;
 		try {
-			const builds = await this.getBuilds({ limit: 1, offset: 0 });
-			if (builds.length === 0) return;
-			const latestBuild = builds[0];
+			const response = await listBuilds(this.settings.token, 1, 0);
+			if (!response.success || response.data.length === 0) return;
+			const latestBuild = response.data[0];
 			const currentVersion = this.getCurrentVersion();
 			if (currentVersion && latestBuild.tag !== currentVersion) {
 				if (this.settings.autoUpdate) {

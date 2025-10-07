@@ -8,12 +8,17 @@ import {
 } from "obsidian";
 import { SecurityWarningConfirmationModal } from "./warning";
 import { refreshSubscription, validateToken } from "./services/auth";
+import { listBuilds } from "./services/list";
 import moment from "moment";
 import { BuildData } from "./services/response";
+import { errorToString as e } from "./common/utils";
+
+const PAGE_SIZE = 5;
 
 export interface VTBetaHelperSettings {
 	token: string;
 	autoUpdate: boolean;
+	updateCheckInterval: number;
 	showUpdateNotification: boolean;
 	showReleaseNotes: boolean;
 	hideSecurityInfo: boolean;
@@ -22,6 +27,7 @@ export interface VTBetaHelperSettings {
 export const DEFAULT_SETTINGS: VTBetaHelperSettings = {
 	token: "",
 	autoUpdate: true,
+	updateCheckInterval: 1,
 	showUpdateNotification: true,
 	showReleaseNotes: true,
 	hideSecurityInfo: false,
@@ -29,6 +35,7 @@ export const DEFAULT_SETTINGS: VTBetaHelperSettings = {
 
 export class VTBetaHelperSettingTab extends PluginSettingTab {
 	plugin: VTBetaHelper;
+	private currentPage = 0;
 
 	constructor(app: App, plugin: VTBetaHelper) {
 		super(app, plugin);
@@ -40,6 +47,7 @@ export class VTBetaHelperSettingTab extends PluginSettingTab {
 		containerEl.empty();
 
 		if (!this.plugin.settings.token.trim()) {
+			this.currentPage = 0;
 			this.displayWelcomeScreen(containerEl);
 		} else {
 			this.displaySettingsScreen(containerEl);
@@ -132,7 +140,11 @@ export class VTBetaHelperSettingTab extends PluginSettingTab {
 		parentEl.createEl("p", { text: "No builds available." });
 	}
 
-	private displayBuildList(parentEl: HTMLElement, builds: BuildData[]) {
+	private displayBuildList(
+		parentEl: HTMLElement,
+		builds: BuildData[],
+		hasMore: boolean
+	) {
 		const currentVersion = this.plugin.getCurrentVersion();
 		parentEl.createDiv(); // dummy div for consistent visual styles
 		for (const build of builds) {
@@ -171,15 +183,57 @@ export class VTBetaHelperSettingTab extends PluginSettingTab {
 					.onClick(installBtnClick);
 			});
 		}
+
+		const paginationEl = new Setting(parentEl);
+		paginationEl.addExtraButton((button) => {
+			button
+				.setIcon("arrow-left")
+				.setTooltip("Previous page")
+				.setDisabled(this.currentPage === 0)
+				.onClick(() => {
+					if (this.currentPage > 0) {
+						this.currentPage--;
+						this.display();
+					}
+				});
+		});
+		paginationEl.addExtraButton((button) => {
+			button
+				.setIcon("arrow-right")
+				.setTooltip("Next page")
+				.setDisabled(!hasMore)
+				.onClick(() => {
+					this.currentPage++;
+					this.display();
+				});
+		});
+	}
+
+	private displayErrorAndRetryButton(parentEl: HTMLElement, error: unknown) {
+		parentEl.createEl("p", { text: "Failed to load builds: " + e(error) });
+		parentEl.createEl("button", {
+			text: "Retry",
+			onclick: () => this.display(),
+		});
 	}
 
 	private async displayAvailableBuilds(parentEl: HTMLElement) {
+		const token = this.plugin.settings.token;
 		const buildsEl = parentEl.createDiv({ cls: "vt-beta-builds" });
-		const builds = await this.plugin.getBuilds({ limit: 5, offset: 0 });
-		if (builds.length === 0) {
+		if (!token) {
 			this.displayEmptyList(buildsEl);
-		} else {
-			this.displayBuildList(buildsEl, builds);
+			return;
+		}
+		try {
+			const offset = this.currentPage * PAGE_SIZE;
+			const response = await listBuilds(token, PAGE_SIZE, offset);
+			if (!response.success || response.data.length === 0) {
+				throw new Error("Unknown error");
+			}
+			const { data, has_more } = response;
+			this.displayBuildList(buildsEl, data, has_more);
+		} catch (error) {
+			this.displayErrorAndRetryButton(buildsEl, error);
 		}
 	}
 
@@ -201,6 +255,29 @@ export class VTBetaHelperSettingTab extends PluginSettingTab {
 						this.display();
 					})
 			);
+
+		if (this.plugin.settings.autoUpdate) {
+			new Setting(parentEl)
+				.setName("Update check interval")
+				.setDesc("Set how often to check for updates.")
+				.addDropdown((dropdown) => {
+					dropdown
+						.addOption("1", "1 hour")
+						.addOption("12", "12 hours")
+						.addOption("24", "1 day")
+						.addOption("48", "2 days")
+						.addOption("168", "1 week")
+						.setValue(
+							this.plugin.settings.updateCheckInterval.toString()
+						)
+						.onChange(async (value) => {
+							this.plugin.settings.updateCheckInterval =
+								parseInt(value);
+							await this.plugin.saveSettings();
+							this.plugin.startUpdateChecker();
+						});
+				});
+		}
 
 		if (!this.plugin.settings.autoUpdate) {
 			new Setting(parentEl)
