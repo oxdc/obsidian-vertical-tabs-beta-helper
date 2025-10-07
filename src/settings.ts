@@ -10,9 +10,9 @@ import { SecurityWarningConfirmationModal } from "./warning";
 import { refreshSubscription, validateToken } from "./services/auth";
 import { listBuilds } from "./services/list";
 import moment from "moment";
-import { BuildData } from "./services/response";
 import { errorToString as e } from "./common/utils";
 import { ReleaseNoteModal } from "./release_note";
+import { BuildsResult, cache, SubscriptionData } from "./services/cache";
 
 const PAGE_SIZE = 5;
 
@@ -141,12 +141,8 @@ export class VTBetaHelperSettingTab extends PluginSettingTab {
 		parentEl.createEl("p", { text: "No builds available." });
 	}
 
-	private displayBuildList(
-		parentEl: HTMLElement,
-		builds: BuildData[],
-		hasMore: boolean,
-		total: number
-	) {
+	private displayBuildList(parentEl: HTMLElement, result: BuildsResult) {
+		const { data: builds, has_more, total } = result;
 		const currentVersion = this.plugin.getCurrentVersion();
 		parentEl.createDiv(); // dummy div for consistent visual styles
 		for (const build of builds) {
@@ -223,7 +219,7 @@ export class VTBetaHelperSettingTab extends PluginSettingTab {
 			button
 				.setIcon("chevron-right")
 				.setTooltip("Next page")
-				.setDisabled(!hasMore)
+				.setDisabled(!has_more)
 				.onClick(() => {
 					this.currentPage++;
 					this.display();
@@ -233,7 +229,7 @@ export class VTBetaHelperSettingTab extends PluginSettingTab {
 			button
 				.setIcon("chevrons-right")
 				.setTooltip("Last page")
-				.setDisabled(!hasMore)
+				.setDisabled(!has_more)
 				.onClick(() => {
 					this.currentPage = totalPages - 1;
 					this.display();
@@ -267,14 +263,21 @@ export class VTBetaHelperSettingTab extends PluginSettingTab {
 		this.displayLoadingIndicator(buildsEl, "Loading builds...");
 
 		try {
-			const offset = this.currentPage * PAGE_SIZE;
-			const response = await listBuilds(token, PAGE_SIZE, offset);
-			if (!response.success || response.data.length === 0) {
-				throw new Error("Unknown error");
-			}
-			const { data, has_more } = response;
+			const result = await cache.fetchBuilds(
+				token,
+				this.currentPage,
+				PAGE_SIZE,
+				async () => {
+					const offset = this.currentPage * PAGE_SIZE;
+					const response = await listBuilds(token, PAGE_SIZE, offset);
+					if (!response.success || response.data.length === 0) {
+						throw new Error("Unknown error");
+					}
+					return response;
+				}
+			);
 			buildsEl.empty();
-			this.displayBuildList(buildsEl, data, has_more, response.total);
+			this.displayBuildList(buildsEl, result);
 		} catch (error) {
 			buildsEl.empty();
 			this.displayErrorAndRetryButton(buildsEl, error);
@@ -379,27 +382,12 @@ export class VTBetaHelperSettingTab extends PluginSettingTab {
 			);
 	}
 
-	private async displaySubscriptionStatus(parentEl: HTMLElement) {
-		const token = this.plugin.settings.token;
-
-		this.displayLoadingIndicator(
-			parentEl,
-			"Fetching subscription status..."
-		);
-
-		const subscription = await refreshSubscription(token);
-		parentEl.empty();
+	private renderSubscriptionInfo(
+		parentEl: HTMLElement,
+		subscription: SubscriptionData
+	) {
 		const statusEl = parentEl.createDiv({ cls: "vt-beta-subscription" });
-
-		if (!subscription || !subscription.success) {
-			statusEl.toggleClass("mod-error", true);
-			statusEl.setText("Unable to load subscription.");
-			return;
-		}
-
-		statusEl.toggleClass("mod-error", false);
-
-		const { email, expires_at } = subscription.data;
+		const { email, expires_at } = subscription;
 		const expiryDate = moment(expires_at);
 		const expiryDateText = expiryDate.format("L");
 
@@ -416,12 +404,44 @@ export class VTBetaHelperSettingTab extends PluginSettingTab {
 		expiryEl.createEl("code", { cls: "mod-info", text: expiryDateText });
 	}
 
+	private async displaySubscriptionStatus(parentEl: HTMLElement) {
+		const token = this.plugin.settings.token;
+
+		this.displayLoadingIndicator(
+			parentEl,
+			"Fetching subscription status..."
+		);
+
+		try {
+			const subscription = await cache.fetchSubscription(async () => {
+				const response = await refreshSubscription(token);
+				if (!response || !response.success) {
+					throw new Error("Unable to load subscription");
+				}
+				return response.data;
+			});
+
+			parentEl.empty();
+			this.renderSubscriptionInfo(parentEl, subscription);
+		} catch (error) {
+			parentEl.empty();
+			const statusEl = parentEl.createDiv({
+				cls: "vt-beta-subscription",
+			});
+			statusEl.toggleClass("mod-error", true);
+			statusEl.setText("Unable to load subscription.");
+		}
+	}
+
 	private displayRefreshButton(parentEl: Setting) {
 		parentEl.addExtraButton((button) => {
 			button
 				.setIcon("refresh-cw")
 				.setTooltip("Refresh")
-				.onClick(() => this.display());
+				.onClick(() => {
+					cache.invalidate();
+					this.display();
+				});
 		});
 	}
 
