@@ -7,7 +7,7 @@ import {
 import { validateToken, normalizeToken } from "./services/auth";
 import { ApiService } from "./services/api";
 import { upgrade } from "./services/upgrade";
-import { BuildData, GetSubscriptionResponse } from "./services/response";
+import { BuildData } from "./services/response";
 import { errorToString as e } from "./common/utils";
 
 const UPDATE_CHECK_INTERVAL = 1000 * 60 * 60; // 1 hour
@@ -22,7 +22,6 @@ type GetBuildsParams = {
 export default class VTBetaHelper extends Plugin {
 	settings: VTBetaHelperSettings;
 	private updateCheckInterval: number | null = null;
-	private cachedSubscription: GetSubscriptionResponse | null = null;
 
 	// Public - Lifecycle Methods
 
@@ -33,10 +32,7 @@ export default class VTBetaHelper extends Plugin {
 			"vtbetahelper",
 			this.setupHandler.bind(this)
 		);
-		if (this.settings.token) {
-			await this.refreshSubscription();
-			this.startUpdateChecker();
-		}
+		if (this.settings.token) this.startUpdateChecker();
 	}
 
 	onunload() {
@@ -68,7 +64,6 @@ export default class VTBetaHelper extends Plugin {
 			if (isValid) {
 				this.settings.token = normalizeToken(accessToken);
 				await this.saveSettings();
-				await this.refreshSubscription();
 				this.startUpdateChecker();
 			} else {
 				new Notice(errorMessage, MESSAGE_INTERVAL);
@@ -101,27 +96,6 @@ export default class VTBetaHelper extends Plugin {
 		if (this.updateCheckInterval === null) return;
 		window.clearInterval(this.updateCheckInterval);
 		this.updateCheckInterval = null;
-	}
-
-	// Public - Subscription
-
-	async refreshSubscription(): Promise<void> {
-		if (!this.settings.token) return;
-		try {
-			const apiService = new ApiService(this.settings.token);
-			this.cachedSubscription = await apiService.getSubscription();
-		} catch (error) {
-			// Report error but don't invalidate the cache
-			new Notice(
-				"Failed to refresh your Vertical Tabs Beta subscription status: " +
-					e(error),
-				MESSAGE_INTERVAL
-			);
-		}
-	}
-
-	getSubscription(): GetSubscriptionResponse | null {
-		return this.cachedSubscription;
 	}
 
 	// Public - Builds

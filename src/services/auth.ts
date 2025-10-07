@@ -1,8 +1,11 @@
 import { ApiError, ApiException, ApiService } from "./api";
-import { stripTokenDashes, sleep, makeError } from "../common/utils";
+import {
+	stripTokenDashes,
+	retryWithBackoff,
+	RetryConfig,
+} from "../common/utils";
+import { GetSubscriptionResponse } from "./response";
 
-const MAX_RETRIES = 5;
-const INITIAL_RETRY_DELAY = 500;
 const RETRYABLE_ERRORS = [
 	ApiError.ServerError,
 	ApiError.UnknownError,
@@ -33,45 +36,64 @@ export async function validateToken(
 		return { isValid: false, errorMessage: Messages.InvalidToken };
 	}
 
-	let lastError: Error | null = null;
-	for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
-		try {
-			const apiService = new ApiService(normalizedToken);
+	const retryConfig: RetryConfig = {
+		maxRetries: 5,
+		initialDelay: 500,
+		shouldRetry: (error) => ({
+			retry:
+				error instanceof ApiException &&
+				RETRYABLE_ERRORS.includes(error.error),
+		}),
+	};
+
+	try {
+		const apiService = new ApiService(normalizedToken);
+
+		await retryWithBackoff(async () => {
 			const response = await apiService.getSubscription();
 			const isValid = response.success && response.data.valid;
-			const errorMessage = isValid ? "" : Messages.Unauthorized;
-			return { isValid, errorMessage };
-		} catch (error) {
-			if (error instanceof ApiException) {
-				// Don't retry on non-retryable errors
-				if (!RETRYABLE_ERRORS.includes(error.error)) {
-					const errorMessage =
-						error.error === ApiError.Unauthorized
-							? Messages.Unauthorized
-							: Messages.ServerError;
-					return { isValid: false, errorMessage };
-				}
-			}
-			lastError = makeError(error);
-			// Exponential backoff for retryable errors
-			if (attempt < MAX_RETRIES) {
-				const delay = INITIAL_RETRY_DELAY * Math.pow(2, attempt);
-				await sleep(delay);
+			if (!isValid) throw new ApiException(ApiError.Unauthorized);
+			return response;
+		}, retryConfig);
+
+		return { isValid: true, errorMessage: "" };
+	} catch (error) {
+		let errorMessage = Messages.ServerError;
+		if (error instanceof ApiException) {
+			switch (error.error) {
+				case ApiError.Unauthorized:
+					errorMessage = Messages.Unauthorized;
+					break;
+				case ApiError.RateLimited:
+					errorMessage = Messages.RateLimited;
+					break;
+				case ApiError.ServerError:
+					errorMessage = Messages.ServerError;
+					break;
 			}
 		}
+		return { isValid: false, errorMessage };
 	}
+}
 
-	let errorMessage = Messages.ServerError;
-	if (lastError instanceof ApiException) {
-		switch (lastError.error) {
-			case ApiError.RateLimited:
-				errorMessage = Messages.RateLimited;
-				break;
-			case ApiError.ServerError:
-				errorMessage = Messages.ServerError;
-				break;
-		}
-	}
+export async function refreshSubscription(
+	token: string
+): Promise<GetSubscriptionResponse> {
+	const normalizedToken = normalizeToken(token);
+	const apiService = new ApiService(normalizedToken);
 
-	return { isValid: false, errorMessage };
+	const retryConfig: RetryConfig = {
+		maxRetries: 10,
+		initialDelay: 1000,
+		shouldRetry: (error) => ({
+			retry:
+				error instanceof ApiException &&
+				RETRYABLE_ERRORS.includes(error.error),
+		}),
+	};
+
+	return await retryWithBackoff(
+		async () => await apiService.getSubscription(),
+		retryConfig
+	);
 }

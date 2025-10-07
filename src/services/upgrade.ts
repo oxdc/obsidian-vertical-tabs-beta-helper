@@ -3,15 +3,14 @@ import { DownloadBuildSuccess, isDownloadBuildSuccess } from "./response";
 import { ApiService, ApiException, ApiError } from "./api";
 import {
 	errorToString as e,
-	makeError,
 	randomString,
-	sleep,
+	RetryConfig,
+	retryWithBackoff,
 } from "../common/utils";
 import JSZip from "jszip";
 
 const VERTICAL_TABS_ID = "vertical-tabs";
-const MAX_RETRIES = 5;
-const INITIAL_RETRY_DELAY = 1000;
+const RETRY_DELAY = 1000;
 const RETRYABLE_ERRORS = [ApiError.ServerError, ApiError.UnknownError];
 
 export class UpgradeException extends Error {
@@ -21,40 +20,41 @@ export class UpgradeException extends Error {
 	}
 }
 
-// prettier-ignore
-async function downloadBuild(apiService: ApiService, tag: string): Promise<DownloadBuildSuccess> {
-	let lastError: Error | null = null;
-	for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
-		try {
-			const result = await apiService.downloadBuild(tag);
-			if (isDownloadBuildSuccess(result)) return result;
-		} catch (error) {
+async function downloadBuild(
+	apiService: ApiService,
+	tag: string
+): Promise<DownloadBuildSuccess> {
+	const retryConfig: RetryConfig = {
+		maxRetries: 5,
+		initialDelay: RETRY_DELAY,
+		shouldRetry: (error) => {
 			if (error instanceof ApiException) {
-				// Build not ready - use server's retry_after hint
 				if (error.error === ApiError.BuildNotReady) {
-					lastError = error;
-					if (attempt < MAX_RETRIES) {
-						const retryAfter = (error.context.retry_after as number) || INITIAL_RETRY_DELAY;
-						await sleep(retryAfter);
-						continue; // Retry
-					}
+					const delay =
+						(error.context?.retry_after as number) || RETRY_DELAY;
+					return { retry: true, delay };
 				}
-				// Don't retry on non-retryable errors (auth, not found)
-				else if (!RETRYABLE_ERRORS.includes(error.error)) {
-					throw new UpgradeException(`Failed to download build '${tag}': ${e(error)}`);
+				if (!RETRYABLE_ERRORS.includes(error.error)) {
+					return { retry: false };
 				}
 			}
-			lastError = makeError(error);
-			// Exponential backoff for network/server errors
-			if (attempt < MAX_RETRIES) {
-				const delay = INITIAL_RETRY_DELAY * Math.pow(2, attempt);
-				await sleep(delay);
+			return { retry: true };
+		},
+	};
+
+	try {
+		return await retryWithBackoff(async () => {
+			const result = await apiService.downloadBuild(tag);
+			if (!isDownloadBuildSuccess(result)) {
+				throw new UpgradeException(`Invalid response`);
 			}
-		}
+			return result;
+		}, retryConfig);
+	} catch (error) {
+		throw new UpgradeException(
+			`Failed to download build '${tag}': ${e(error)}`
+		);
 	}
-	throw new UpgradeException(
-		`Failed to download build '${tag}' after ${MAX_RETRIES + 1} attempts: ${e(lastError)}`
-	);
 }
 
 async function verify(binaryData: ArrayBuffer, sha256: string): Promise<void> {
