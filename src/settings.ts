@@ -224,6 +224,10 @@ export class VTBetaHelperSettingTab extends PluginSettingTab {
 			this.displayEmptyList(buildsEl);
 			return;
 		}
+
+		const loadingEl = buildsEl.createDiv({ cls: "vt-beta-loading" });
+		loadingEl.createEl("p", { text: "Loading builds..." });
+
 		try {
 			const offset = this.currentPage * PAGE_SIZE;
 			const response = await listBuilds(token, PAGE_SIZE, offset);
@@ -231,8 +235,10 @@ export class VTBetaHelperSettingTab extends PluginSettingTab {
 				throw new Error("Unknown error");
 			}
 			const { data, has_more } = response;
+			buildsEl.empty();
 			this.displayBuildList(buildsEl, data, has_more);
 		} catch (error) {
+			buildsEl.empty();
 			this.displayErrorAndRetryButton(buildsEl, error);
 		}
 	}
