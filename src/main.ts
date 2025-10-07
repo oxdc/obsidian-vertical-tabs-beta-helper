@@ -117,6 +117,11 @@ export default class VTBetaHelper extends Plugin {
 		return [];
 	}
 
+	getCurrentVersion(): string | null {
+		const plugin = this.app.plugins.plugins[VERTICAL_TABS_ID];
+		return plugin?.manifest.version || null;
+	}
+
 	// Private - Update Checker
 
 	private async checkForUpdates(): Promise<void> {
@@ -142,11 +147,6 @@ export default class VTBetaHelper extends Plugin {
 				MESSAGE_INTERVAL
 			);
 		}
-	}
-
-	private getCurrentVersion(): string | null {
-		const plugin = this.app.plugins.plugins[VERTICAL_TABS_ID];
-		return plugin?.manifest.version || null;
 	}
 
 	async upgradeToVersion(tag: string): Promise<void> {

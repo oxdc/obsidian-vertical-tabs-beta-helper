@@ -1,6 +1,7 @@
 import VTBetaHelper from "./main";
 import {
 	App,
+	ExtraButtonComponent,
 	Notice,
 	PluginSettingTab,
 	Setting,
@@ -9,6 +10,7 @@ import {
 import { SecurityWarningConfirmationModal } from "./warning";
 import { refreshSubscription, validateToken } from "./services/auth";
 import moment from "moment";
+import { BuildData } from "./services/response";
 
 export interface VTBetaHelperSettings {
 	token: string;
@@ -125,6 +127,65 @@ export class VTBetaHelperSettingTab extends PluginSettingTab {
           is for personal use only. Please DO NOT share, sell, or distribute it to anyone.
         </p>
       `;
+	}
+
+	private displayEmptyList(parentEl: HTMLElement) {
+		parentEl.createEl("p", { text: "No builds available." });
+	}
+
+	private displayBuildList(parentEl: HTMLElement, builds: BuildData[]) {
+		const currentVersion = this.plugin.getCurrentVersion();
+		const listEl = parentEl.createDiv({ cls: "vt-beta-builds-list" });
+		for (const build of builds) {
+			const isCurrent = build.tag === currentVersion;
+			const buildEl = listEl.createDiv({ cls: "vt-beta-build-item" });
+			buildEl.toggleClass("current", isCurrent);
+			buildEl.createDiv({ cls: "mod-tag", text: build.tag });
+			const actionsEl = buildEl.createDiv({ cls: "mod-actions" });
+
+			const releaseNoteBtn = new ExtraButtonComponent(actionsEl);
+			releaseNoteBtn
+				.setIcon("info")
+				.setTooltip("Release note")
+				.onClick(async () => {
+					// await this.plugin.showReleaseNote(build.tag);
+				});
+
+			const installBtn = new ExtraButtonComponent(actionsEl);
+			const installBtnEl = installBtn.extraSettingsEl;
+
+			const installBtnClick = async () => {
+				installBtn.setDisabled(true);
+				installBtn.setIcon("loader-circle");
+				installBtn.setTooltip("Installing...");
+				installBtnEl.toggleClass("mod-loading", true);
+				try {
+					await this.plugin.upgradeToVersion(build.tag);
+					this.display();
+				} catch (error) {
+					installBtn.setIcon("download");
+					installBtn.setDisabled(false);
+					installBtn.setTooltip("Install");
+					installBtnEl.toggleClass("mod-loading", false);
+				}
+			};
+
+			installBtn
+				.setIcon("download")
+				.setTooltip("Install")
+				.setDisabled(isCurrent)
+				.onClick(installBtnClick);
+		}
+	}
+
+	private async displayAvailableBuilds(parentEl: HTMLElement) {
+		const buildsEl = parentEl.createDiv({ cls: "vt-beta-builds" });
+		const builds = await this.plugin.getBuilds({ limit: 5, offset: 0 });
+		if (builds.length === 0) {
+			this.displayEmptyList(buildsEl);
+		} else {
+			this.displayBuildList(buildsEl, builds);
+		}
 	}
 
 	private displayOptions(parentEl: HTMLElement) {

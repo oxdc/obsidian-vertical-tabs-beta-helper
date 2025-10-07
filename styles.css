@@ -96,3 +96,68 @@
 .vt-beta-subscription-detail:not(.mod-error) {
 	color: var(--text-accent);
 }
+
+.vt-beta-builds-list {
+	display: flex;
+	flex-direction: column;
+}
+
+.vt-beta-build-item {
+	display: flex;
+	align-items: center;
+	padding: var(--size-4-1) var(--size-4-2);
+	border-radius: var(--radius-s);
+}
+
+.vt-beta-build-item:hover {
+	background: var(--background-modifier-hover);
+}
+
+.vt-beta-build-item .mod-tag {
+	flex: 1 0 auto;
+}
+
+.vt-beta-build-item .mod-actions {
+	flex: 0 0 auto;
+	display: flex;
+	gap: var(--size-4-1);
+}
+
+.vt-beta-build-item .mod-actions .mod-loading {
+	color: transparent;
+	position: relative;
+	white-space: nowrap;
+	overflow: hidden;
+	pointer-events: none;
+}
+
+.vt-beta-build-item .mod-actions .mod-loading svg {
+	visibility: hidden !important;
+}
+
+.vt-beta-build-item .mod-actions .mod-loading::after {
+	content: "";
+	position: absolute;
+	width: 12px;
+	height: 12px;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	margin: auto;
+	border: 2px solid transparent;
+	border-top-color: var(--text-accent);
+	border-radius: 50%;
+	animation: spin 1s ease infinite;
+}
+
+.vt-beta-build-item.current {
+	background: var(--background-modifier-active-hover);
+	color: var(--text-accent);
+	font-weight: var(--font-semibold);
+}
+
+.vt-beta-build-item.current .mod-tag::after {
+	content: "(current)";
+	margin-left: var(--size-4-2);
+}
