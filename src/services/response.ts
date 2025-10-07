@@ -31,6 +31,7 @@ export type BuildData = {
 	tag: string;
 	release_date: string;
 	release_note: string | null;
+	short_summary: string | null;
 	deleted: boolean;
 };
 export type ListBuildsResponse = PaginatedResponse<BuildData>;

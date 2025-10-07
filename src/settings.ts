@@ -151,6 +151,9 @@ export class VTBetaHelperSettingTab extends PluginSettingTab {
 		for (const build of builds) {
 			const isCurrent = build.tag === currentVersion;
 			const buildEl = new Setting(parentEl).setName(build.tag);
+			if (build.short_summary) {
+				buildEl.setDesc(build.short_summary);
+			}
 			buildEl.settingEl.toggleClass("current", isCurrent);
 			buildEl.addExtraButton((button) => {
 				button
@@ -186,7 +189,7 @@ export class VTBetaHelperSettingTab extends PluginSettingTab {
 		}
 
 		const totalPages = Math.ceil(total / PAGE_SIZE);
-		const paginationEl = new Setting(parentEl);
+		const paginationEl = new Setting(parentEl).setNoInfo();
 		paginationEl.addExtraButton((button) => {
 			button
 				.setIcon("chevrons-left")
