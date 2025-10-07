@@ -1,7 +1,6 @@
 import VTBetaHelper from "./main";
 import {
 	App,
-	ExtraButtonComponent,
 	Notice,
 	PluginSettingTab,
 	Setting,
@@ -135,46 +134,42 @@ export class VTBetaHelperSettingTab extends PluginSettingTab {
 
 	private displayBuildList(parentEl: HTMLElement, builds: BuildData[]) {
 		const currentVersion = this.plugin.getCurrentVersion();
-		const listEl = parentEl.createDiv({ cls: "vt-beta-builds-list" });
+		parentEl.createDiv(); // dummy div for consistent visual styles
 		for (const build of builds) {
 			const isCurrent = build.tag === currentVersion;
-			const buildEl = listEl.createDiv({ cls: "vt-beta-build-item" });
-			buildEl.toggleClass("current", isCurrent);
-			buildEl.createDiv({ cls: "mod-tag", text: build.tag });
-			const actionsEl = buildEl.createDiv({ cls: "mod-actions" });
-
-			const releaseNoteBtn = new ExtraButtonComponent(actionsEl);
-			releaseNoteBtn
-				.setIcon("info")
-				.setTooltip("Release note")
-				.onClick(async () => {
-					// await this.plugin.showReleaseNote(build.tag);
-				});
-
-			const installBtn = new ExtraButtonComponent(actionsEl);
-			const installBtnEl = installBtn.extraSettingsEl;
-
-			const installBtnClick = async () => {
-				installBtn.setDisabled(true);
-				installBtn.setIcon("loader-circle");
-				installBtn.setTooltip("Installing...");
-				installBtnEl.toggleClass("mod-loading", true);
-				try {
-					await this.plugin.upgradeToVersion(build.tag);
-					this.display();
-				} catch (error) {
-					installBtn.setIcon("download");
-					installBtn.setDisabled(false);
-					installBtn.setTooltip("Install");
-					installBtnEl.toggleClass("mod-loading", false);
-				}
-			};
-
-			installBtn
-				.setIcon("download")
-				.setTooltip("Install")
-				.setDisabled(isCurrent)
-				.onClick(installBtnClick);
+			const buildEl = new Setting(parentEl).setName(build.tag);
+			buildEl.settingEl.toggleClass("current", isCurrent);
+			buildEl.addExtraButton((button) => {
+				button
+					.setIcon("info")
+					.setTooltip("Release note")
+					.onClick(async () => {
+						// await this.plugin.showReleaseNote(build.tag);
+					});
+			});
+			buildEl.addExtraButton((button) => {
+				const installBtnEl = button.extraSettingsEl;
+				const installBtnClick = async () => {
+					button.setDisabled(true);
+					button.setIcon("loader-circle");
+					button.setTooltip("Installing...");
+					installBtnEl.toggleClass("mod-loading", true);
+					try {
+						await this.plugin.upgradeToVersion(build.tag);
+						this.display();
+					} catch (error) {
+						button.setIcon("download");
+						button.setDisabled(false);
+						button.setTooltip("Install");
+						installBtnEl.toggleClass("mod-loading", false);
+					}
+				};
+				button
+					.setIcon("download")
+					.setTooltip("Install")
+					.setDisabled(isCurrent)
+					.onClick(installBtnClick);
+			});
 		}
 	}
 
@@ -299,6 +294,9 @@ export class VTBetaHelperSettingTab extends PluginSettingTab {
       <h1>Vertical Tabs <span class="vt-beta-tag">Beta</span></h1>
       <p>Welcome onboard! And thank you for your support!</p>
     `;
+
+		new Setting(containerEl).setName("Available builds").setHeading();
+		this.displayAvailableBuilds(containerEl);
 
 		new Setting(containerEl).setName("Options").setHeading();
 		this.displayOptions(containerEl);
