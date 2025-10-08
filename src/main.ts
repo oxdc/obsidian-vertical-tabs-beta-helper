@@ -80,6 +80,7 @@ export default class VTBetaHelper extends Plugin {
 		this.stopUpdateChecker();
 		if (!this.settings.autoUpdate && !this.settings.showUpdateNotification)
 			return;
+		this.checkForUpdates();
 		this.updateCheckInterval = this.registerInterval(
 			window.setInterval(
 				() => this.checkForUpdates(),
@@ -133,11 +134,11 @@ export default class VTBetaHelper extends Plugin {
 		}
 	}
 
-	async upgradeToVersion(tag: string): Promise<void> {
+	async upgradeToVersion(tag: string, manual = false): Promise<void> {
 		if (!this.settings.token) return;
 		try {
 			new Notice(`Installing Vertical Tabs ${tag}...`, MESSAGE_INTERVAL);
-			await upgrade(this.app, tag, this.settings.token);
+			await upgrade(this.app, tag, this.settings.token, manual);
 			new Notice(`Vertical Tabs ${tag} installed.`, MESSAGE_INTERVAL);
 		} catch (error) {
 			new Notice("Installation failed: " + e(error), MESSAGE_INTERVAL);

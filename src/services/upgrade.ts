@@ -22,7 +22,8 @@ export class UpgradeException extends Error {
 
 async function downloadBuild(
 	apiService: ApiService,
-	tag: string
+	tag: string,
+	manual = false
 ): Promise<DownloadBuildSuccess> {
 	const retryConfig: RetryConfig = {
 		maxRetries: 5,
@@ -31,8 +32,9 @@ async function downloadBuild(
 			if (error instanceof ApiException) {
 				if (error.error === ApiError.BuildNotReady) {
 					const delay =
-						(error.context?.retry_after as number) || RETRY_DELAY;
-					return { retry: true, delay };
+						(error.context?.retry_after as number) * 1000 ||
+						RETRY_DELAY;
+					return { retry: !manual, delay };
 				}
 				if (!RETRYABLE_ERRORS.includes(error.error)) {
 					return { retry: false };
@@ -158,10 +160,11 @@ export async function reloadPlugin(app: App): Promise<void> {
 export async function upgrade(
 	app: App,
 	tag: string,
-	token: string
+	token: string,
+	manual = false
 ): Promise<void> {
 	const apiService = new ApiService(token);
-	const result = await downloadBuild(apiService, tag);
+	const result = await downloadBuild(apiService, tag, manual);
 	await verifyAndUpgrade(app, result);
 	await reloadPlugin(app);
 }

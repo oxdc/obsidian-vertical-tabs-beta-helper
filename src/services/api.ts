@@ -1,4 +1,5 @@
 import { requestUrl, RequestUrlParam, RequestUrlResponse } from "obsidian";
+import moment from "moment";
 import type {
 	GetSubscriptionResponse,
 	ListBuildsResponse,
@@ -26,18 +27,28 @@ const ERROR_MESSAGES: Record<ApiError, string> = {
 	[ApiError.NotFound]: "The requested build was not found.",
 	[ApiError.ServerError]:
 		"The server encountered an error. Please try again later.",
-	[ApiError.BuildNotReady]:
-		"The build is being prepared. Please wait a moment.",
+	[ApiError.BuildNotReady]: "The build is being prepared. Please wait %hint.",
 	[ApiError.RateLimited]:
 		"Too many requests. Please wait a moment and try again.",
 };
+
+function formatRetryTime(seconds: number | null): string {
+	if (!seconds) return "a moment";
+	return moment.duration(seconds, "seconds").humanize();
+}
 
 export class ApiException extends Error {
 	constructor(
 		public readonly error: ApiError,
 		public readonly context: Record<string, unknown> = {}
 	) {
-		super(ERROR_MESSAGES[error] || ERROR_MESSAGES[ApiError.UnknownError]);
+		let message =
+			ERROR_MESSAGES[error] || ERROR_MESSAGES[ApiError.UnknownError];
+		if (error === ApiError.BuildNotReady) {
+			const hint = formatRetryTime(context.retry_after as number | null);
+			message = message.replace("%hint", hint);
+		}
+		super(message);
 		this.name = "ApiException";
 	}
 }
