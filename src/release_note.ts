@@ -25,7 +25,7 @@ export class ReleaseNoteModal extends Modal {
 			return;
 		}
 		const containerEl = contentEl.createDiv({
-			cls: "vt-beta-release-note markdown-preview-view",
+			cls: "vt-beta-release-note markdown-rendered markdown-preview-view",
 		});
 		const child = new MarkdownRenderChild(containerEl);
 		MarkdownRenderer.render(this.app, releaseNote, containerEl, "", child);

@@ -132,12 +132,6 @@
 	animation: spin 1s ease infinite;
 }
 
-.vt-beta-builds .setting-item.current .setting-item-name::after {
-	content: "(current)";
-	color: var(--text-accent) !important;
-	margin-left: var(--size-4-2);
-}
-
 .vt-beta-builds .setting-item {
 	flex-direction: row !important;
 	align-items: center !important;
@@ -160,6 +154,13 @@
 
 .vt-beta-builds .setting-item.pagination .setting-item-control {
 	flex-grow: 1 !important;
+}
+
+.vt-beta-builds .setting-item .setting-item-name {
+	display: flex;
+	flex-direction: row;
+	flex-wrap: wrap;
+	gap: var(--size-4-2);
 }
 
 .vt-beta-release-note {

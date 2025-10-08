@@ -158,7 +158,14 @@ export class VTBetaHelperSettingTab extends PluginSettingTab {
 			if (build.short_summary) {
 				buildEl.setDesc(build.short_summary);
 			}
-			buildEl.settingEl.toggleClass("current", isCurrent);
+			buildEl.settingEl.toggleClass("mod-current", isCurrent);
+			buildEl.settingEl.toggleClass("mod-latest", build.latest);
+			if (build.latest) {
+				buildEl.nameEl.createEl("a", { cls: "tag", text: "latest" });
+			}
+			if (isCurrent) {
+				buildEl.nameEl.createEl("a", { cls: "tag", text: "installed" });
+			}
 			buildEl.addExtraButton((button) => {
 				button
 					.setIcon("info")
