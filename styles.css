@@ -34,6 +34,7 @@
 
 .vt-beta-token .setting-item-control input {
 	width: 100% !important;
+	opacity: 1 !important;
 }
 
 .vt-beta-tag {
@@ -150,6 +151,7 @@
 
 .vt-beta-builds .setting-item.pagination {
 	justify-content: flex-end;
+	flex-direction: column !important;
 }
 
 .vt-beta-builds .setting-item.pagination .setting-item-control {
@@ -163,13 +165,37 @@
 	gap: var(--size-4-2);
 }
 
+.vt-beta-builds .clickable-icon.is-disabled {
+	opacity: 0.5 !important;
+	cursor: not-allowed !important;
+}
+
+.vt-beta-builds a.tag {
+	cursor: normal !important;
+}
+
+.vt-beta-builds-title {
+	flex-direction: row !important;
+}
+
+.vt-beta-builds-title .setting-item-info {
+	flex-grow: 1 !important;
+	flex-shrink: 1 !important;
+}
+
+.vt-beta-builds-title .setting-item-control {
+	flex-grow: 0 !important;
+	flex-shrink: 1 !important;
+	width: unset !important;
+}
+
 .vt-beta-release-note {
 	max-height: 350px;
 	overflow: scroll;
 	padding: 0 var(--size-4-2) !important;
 }
 
-vt-beta-doc-links a {
+.vt-beta-doc-links a {
 	color: var(--text-normal);
 	font-size: var(--font-ui-small);
 }

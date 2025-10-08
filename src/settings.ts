@@ -498,6 +498,7 @@ export class VTBetaHelperSettingTab extends PluginSettingTab {
 
 		const buildsHeadingEl = new Setting(containerEl);
 		buildsHeadingEl.setName("Available builds").setHeading();
+		buildsHeadingEl.settingEl.addClass("vt-beta-builds-title");
 		this.displayRefreshButton(buildsHeadingEl);
 		this.displayAvailableBuilds(containerEl);
 
