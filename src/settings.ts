@@ -115,31 +115,33 @@ export class VTBetaHelperSettingTab extends PluginSettingTab {
 
 	private displayWelcomeScreen(parentEl: HTMLElement) {
 		const containerEl = parentEl.createDiv({ cls: "vt-beta-welcome" });
+
 		const headerEl = containerEl.createDiv({ cls: "vt-beta-header" });
-		headerEl.innerHTML = `
-        <h1>Welcome to Vertical Tabs <span class="vt-beta-tag">Beta</span></h1>
-        <p>
-          This plugin will help you install and manage the beta versions of Vertical Tabs.
-          To get started, please paste your access token below.
-        </p>
-      `;
+		const headerWrapperEl = headerEl.createEl("h1");
+		headerWrapperEl.appendText("Welcome to Vertical Tabs ");
+		headerWrapperEl.createSpan({ cls: "vt-beta-tag", text: "Beta" });
+		headerEl.createEl("p", {
+			text: `This plugin will help you install and manage the beta versions of
+			       Vertical Tabs. To get started, please paste your access token below.`,
+		});
+
 		this.displayTokenInput(containerEl, false);
-		const footerEl = containerEl.createDiv({ cls: "vt-beta-footer" });
-		footerEl.innerHTML = `
-        <p>
-          After subscribing to the beta program, you should receive an email with your access token.
-          If you didn't receive it, please check your spam folder. If you have any trouble, please
-          contact me on <a href="https://ko-fi.com/oxdcq" target="_blank">Ko-fi</a>.
-        </p>
-        <p>
-          If you haven't joined the beta program, make sure to read the
-          <a href="https://oxdc.github.io/obsidian-vertical-tabs-docs/beta-program" target="_blank">
-            FAQ on beta testing
-          </a>
-          carefully before subscribing. Please keep your access token private. Vertical Tabs Beta
-          is for personal use only. Please DO NOT share, sell, or distribute it to anyone.
-        </p>
-      `;
+
+		this.displayDocLinks(containerEl);
+
+		containerEl
+			.createDiv({ cls: "vt-beta-footer" })
+			.createEl("p", {
+				text: `After subscribing to the beta program, you should receive an email
+			         with your access token. If you didn't receive it, please check your
+						   spam folder. If you have any trouble, please contact me on Ko-fi.`,
+			})
+			.createEl("p", {
+				text: `If you haven't joined the beta program, make sure to read the Terms of
+			         Service, Privacy Policy and FAQ carefully before subscribing. Please
+						   keep your access token private. Vertical Tabs Beta is for personal use
+						   only. Please DO NOT share, sell, or distribute it to anyone.`,
+			});
 	}
 
 	private displayEmptyList(parentEl: HTMLElement) {
@@ -480,10 +482,12 @@ export class VTBetaHelperSettingTab extends PluginSettingTab {
 
 	private displaySettingsScreen(parentEl: HTMLElement) {
 		const containerEl = parentEl.createDiv({ cls: "vt-beta-settings" });
-		containerEl.innerHTML = `
-      <h1>Vertical Tabs <span class="vt-beta-tag">Beta</span></h1>
-      <p>Welcome onboard! And thank you for your support!</p>
-    `;
+		const headerEl = containerEl.createEl("h1");
+		headerEl.appendText("Vertical Tabs ");
+		headerEl.createSpan({ cls: "vt-beta-tag", text: "Beta" });
+		containerEl.createEl("p", {
+			text: "Welcome onboard! And thank you for your support!",
+		});
 
 		const buildsHeadingEl = new Setting(containerEl);
 		buildsHeadingEl.setName("Available builds").setHeading();
@@ -498,25 +502,57 @@ export class VTBetaHelperSettingTab extends PluginSettingTab {
 		const subscriptionEl = containerEl.createDiv();
 		this.displaySubscriptionStatus(subscriptionEl);
 
-		const footerEl = containerEl.createDiv({ cls: "vt-beta-footer" });
-		footerEl.innerHTML = `
-      <p>
-        If you have any trouble, please contact me on
-        <a href="https://ko-fi.com/oxdcq" target="_blank">Ko-fi</a>
-        or report issues on
-        <a href="https://github.com/oxdc/obsidian-vertical-tabs/issues/new/choose" target="_blank">GitHub</a>.
-      </p>
-      <p>
-        To rollback to the public version of Vertical Tabs, please unsubscribe on
-        <a href="https://ko-fi.com/" target="_blank">Ko-fi</a>
-        , uninstall Vertical Tabs Beta and this helper, then reinstall Vertical Tabs from the
-        community plugin store. Your settings may not be compatible with the public version and
-        will not be preserved.
-      </p>
-      <p>
-        Please keep your access token private. Vertical Tabs Beta is for personal use only. Please
-        DO NOT share, sell, or distribute it to anyone.
-      </p>
-    `;
+		this.displayDocLinks(containerEl);
+
+		containerEl
+			.createDiv({ cls: "vt-beta-footer" })
+			.createEl("p", {
+				text: `To rollback to the public version of Vertical Tabs, please unsubscribe
+					     on Ko-fi, uninstall Vertical Tabs Beta and this helper, then reinstall
+						   Vertical Tabs from the community plugin store. Your settings may not be
+						   compatible with the public version and will not be preserved.`,
+			})
+			.createEl("p", {
+				text: `Please keep your access token private. Vertical Tabs Beta is for personal
+			         use only. Please DO NOT share, sell, or distribute it to anyone.`,
+			});
+	}
+
+	private displayDocLinks(parentEl: HTMLElement) {
+		const docEl = parentEl.createEl("p", { cls: "vt-beta-doc-links" });
+		docEl
+			.createEl("a", {
+				href: "https://oxdc.github.io/obsidian-vertical-tabs-docs/Beta-Versions/terms",
+				text: "Terms of Service",
+			})
+			.setAttr("target", "_blank");
+		docEl.appendText(" · ");
+		docEl
+			.createEl("a", {
+				href: "https://oxdc.github.io/obsidian-vertical-tabs-docs/Beta-Versions/security",
+				text: "Privacy Policy",
+			})
+			.setAttr("target", "_blank");
+		docEl.appendText(" · ");
+		docEl
+			.createEl("a", {
+				href: "https://oxdc.github.io/obsidian-vertical-tabs-docs/Beta-Versions/beta-faq",
+				text: "FAQ",
+			})
+			.setAttr("target", "_blank");
+		docEl.appendText(" · ");
+		docEl
+			.createEl("a", {
+				href: "https://ko-fi.com/oxdcq",
+				text: "Ko-fi",
+			})
+			.setAttr("target", "_blank");
+		docEl.appendText(" · ");
+		docEl
+			.createEl("a", {
+				href: "https://github.com/oxdc/obsidian-vertical-tabs",
+				text: "GitHub",
+			})
+			.setAttr("target", "_blank");
 	}
 }

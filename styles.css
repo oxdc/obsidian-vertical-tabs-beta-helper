@@ -87,6 +87,7 @@
 .vt-beta-subscription-detail .mod-info {
 	padding: var(--size-2-1) var(--size-2-2);
 	word-break: break-all;
+	color: var(--text-normal);
 }
 
 .vt-beta-subscription-detail .mod-error {
@@ -165,4 +166,9 @@
 	max-height: 350px;
 	overflow: scroll;
 	padding: 0 var(--size-4-2) !important;
+}
+
+vt-beta-doc-links a {
+	color: var(--text-normal);
+	font-size: var(--font-ui-small);
 }
