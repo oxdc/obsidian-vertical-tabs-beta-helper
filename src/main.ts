@@ -142,6 +142,7 @@ export default class VTBetaHelper extends Plugin {
 			new Notice(`Vertical Tabs ${tag} installed.`, MESSAGE_INTERVAL);
 		} catch (error) {
 			new Notice("Installation failed: " + e(error), MESSAGE_INTERVAL);
+			throw error;
 		}
 	}
 }
