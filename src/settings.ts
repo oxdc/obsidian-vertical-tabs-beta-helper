@@ -174,6 +174,11 @@ export class VTBetaHelperSettingTab extends PluginSettingTab {
 					installBtnEl.toggleClass("mod-loading", true);
 					try {
 						await this.plugin.upgradeToVersion(build.tag);
+						if (!build.latest && this.plugin.settings.autoUpdate) {
+							this.plugin.settings.autoUpdate = false;
+							await this.plugin.saveSettings();
+							this.plugin.stopUpdateChecker();
+						}
 						this.display();
 					} catch (error) {
 						button.setIcon("download");

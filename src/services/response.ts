@@ -27,12 +27,11 @@ type _PaginatedResponse<T> = {
 export type PaginatedResponse<T> = _PaginatedResponse<T> | ErrorResponse;
 
 export type BuildData = {
-	id: number;
 	tag: string;
 	release_date: string;
 	release_note: string | null;
 	short_summary: string | null;
-	deleted: boolean;
+	latest: boolean;
 };
 export type ListBuildsResponse = PaginatedResponse<BuildData>;
 
