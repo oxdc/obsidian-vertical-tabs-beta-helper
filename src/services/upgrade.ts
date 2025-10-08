@@ -142,7 +142,6 @@ export async function reloadPlugin(app: App): Promise<void> {
 		}
 		const root = app.plugins.getPluginFolder();
 		const targetDir = normalizePath(`${root}/${VERTICAL_TABS_ID}`);
-		console.log("targetDir", targetDir);
 		await app.plugins.loadManifest(targetDir);
 		await app.plugins.enablePluginAndSave(VERTICAL_TABS_ID);
 	} catch (error) {

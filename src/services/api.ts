@@ -48,6 +48,8 @@ export class ApiService {
 			headers: {
 				Authorization: `Bearer ${this.token}`,
 				"User-Agent": `vtbetahelper/${USER_AGENT_VERSION}`,
+				"Cache-Control": "no-cache, no-store, must-revalidate",
+				Pragma: "no-cache",
 			},
 			throw: false,
 		});
@@ -109,7 +111,11 @@ export class ApiService {
 	}
 
 	async downloadBuild(tag: string): Promise<DownloadBuildResult> {
-		const response = await this.request(`/builds/${tag}/download`);
+		// Add cache-busting parameter
+		const cacheBuster = `?_t=${Date.now()}`;
+		const response = await this.request(
+			`/builds/${tag}/download${cacheBuster}`
+		);
 
 		switch (response.status) {
 			case 200: {
