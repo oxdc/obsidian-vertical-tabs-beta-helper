@@ -8,6 +8,7 @@ import { validateToken, normalizeToken } from "./services/auth";
 import { upgrade } from "./services/upgrade";
 import { listBuilds } from "./services/list";
 import { errorToString as e } from "./common/utils";
+import { ReleaseNoteModal } from "./release_note";
 
 const MESSAGE_INTERVAL = 10000; // 10 seconds
 const VERTICAL_TABS_ID = "vertical-tabs";
@@ -77,7 +78,8 @@ export default class VTBetaHelper extends Plugin {
 
 	startUpdateChecker() {
 		this.stopUpdateChecker();
-		if (!this.settings.autoUpdate) return;
+		if (!this.settings.autoUpdate && !this.settings.showUpdateNotification)
+			return;
 		this.updateCheckInterval = this.registerInterval(
 			window.setInterval(
 				() => this.checkForUpdates(),
@@ -106,9 +108,16 @@ export default class VTBetaHelper extends Plugin {
 			if (!response.success || response.data.length === 0) return;
 			const latestBuild = response.data[0];
 			const currentVersion = this.getCurrentVersion();
-			if (currentVersion && latestBuild.tag !== currentVersion) {
+			if (latestBuild.tag !== currentVersion) {
 				if (this.settings.autoUpdate) {
+					if (!currentVersion) return;
 					await this.upgradeToVersion(latestBuild.tag);
+					if (
+						this.settings.showReleaseNotes &&
+						latestBuild.release_note
+					) {
+						new ReleaseNoteModal(this.app, latestBuild).open();
+					}
 				} else if (this.settings.showUpdateNotification) {
 					new Notice(
 						`Vertical Tabs ${latestBuild.tag} is now available. Check settings to update.`,
@@ -127,7 +136,9 @@ export default class VTBetaHelper extends Plugin {
 	async upgradeToVersion(tag: string): Promise<void> {
 		if (!this.settings.token) return;
 		try {
+			new Notice(`Installing Vertical Tabs ${tag}...`, MESSAGE_INTERVAL);
 			await upgrade(this.app, tag, this.settings.token);
+			new Notice(`Vertical Tabs ${tag} installed.`, MESSAGE_INTERVAL);
 		} catch (error) {
 			new Notice(
 				"Failed to upgrade Vertical Tabs Beta: " + e(error),

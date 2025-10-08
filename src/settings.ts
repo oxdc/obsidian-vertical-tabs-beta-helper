@@ -180,6 +180,12 @@ export class VTBetaHelperSettingTab extends PluginSettingTab {
 							await this.plugin.saveSettings();
 							this.plugin.stopUpdateChecker();
 						}
+						if (
+							this.plugin.settings.showReleaseNotes &&
+							build.release_note
+						) {
+							new ReleaseNoteModal(this.app, build).open();
+						}
 						this.display();
 					} catch (error) {
 						button.setIcon("download");
@@ -298,7 +304,10 @@ export class VTBetaHelperSettingTab extends PluginSettingTab {
 					.onChange(async (value) => {
 						this.plugin.settings.autoUpdate = value;
 						await this.plugin.saveSettings();
-						if (value) {
+						if (
+							this.plugin.settings.autoUpdate ||
+							this.plugin.settings.showUpdateNotification
+						) {
 							this.plugin.startUpdateChecker();
 						} else {
 							this.plugin.stopUpdateChecker();
@@ -319,6 +328,12 @@ export class VTBetaHelperSettingTab extends PluginSettingTab {
 						.onChange(async (value) => {
 							this.plugin.settings.showUpdateNotification = value;
 							await this.plugin.saveSettings();
+							if (value) {
+								this.plugin.startUpdateChecker();
+							} else {
+								this.plugin.stopUpdateChecker();
+							}
+							this.display();
 						})
 				);
 		}
@@ -346,7 +361,10 @@ export class VTBetaHelperSettingTab extends PluginSettingTab {
 
 		if (!this.showAdvancedOptions) return;
 
-		if (this.plugin.settings.autoUpdate) {
+		if (
+			this.plugin.settings.autoUpdate ||
+			this.plugin.settings.showUpdateNotification
+		) {
 			new Setting(parentEl)
 				.setName("Update check interval")
 				.setDesc("Set how often to check for updates.")
