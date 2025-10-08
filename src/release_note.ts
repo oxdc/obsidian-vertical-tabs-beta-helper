@@ -1,4 +1,10 @@
-import { App, Modal, MarkdownRenderer, Component, Setting } from "obsidian";
+import {
+	App,
+	Modal,
+	MarkdownRenderer,
+	Setting,
+	MarkdownRenderChild,
+} from "obsidian";
 import { BuildData } from "./services/response";
 
 export class ReleaseNoteModal extends Modal {
@@ -21,8 +27,8 @@ export class ReleaseNoteModal extends Modal {
 		const containerEl = contentEl.createDiv({
 			cls: "vt-beta-release-note markdown-preview-view",
 		});
-		const parent = contentEl as unknown as Component;
-		MarkdownRenderer.render(this.app, releaseNote, containerEl, "", parent);
+		const child = new MarkdownRenderChild(containerEl);
+		MarkdownRenderer.render(this.app, releaseNote, containerEl, "", child);
 		new Setting(contentEl).addButton((button) => {
 			button.setButtonText("Close").onClick(() => this.close());
 		});
