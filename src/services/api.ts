@@ -37,6 +37,19 @@ function formatRetryTime(seconds: number | null): string {
 	return moment.duration(seconds, "seconds").humanize();
 }
 
+function getHeader(
+	headers: Record<string, string>,
+	name: string
+): string | undefined {
+	const lowerName = name.toLowerCase();
+	for (const key in headers) {
+		if (key.toLowerCase() === lowerName) {
+			return headers[key];
+		}
+	}
+	return undefined;
+}
+
 export class ApiException extends Error {
 	constructor(
 		public readonly error: ApiError,
@@ -143,8 +156,8 @@ export class ApiService {
 
 		switch (response.status) {
 			case 200: {
-				const contentType = response.headers["content-type"];
-				const sha256 = response.headers["x-sha256"];
+				const contentType = getHeader(response.headers, "content-type");
+				const sha256 = getHeader(response.headers, "x-sha256");
 				if (contentType === "application/zip" && sha256) {
 					return { response, sha256 } as DownloadBuildSuccess;
 				}
