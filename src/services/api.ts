@@ -20,12 +20,25 @@ export enum ApiError {
 	RateLimited = "RateLimited",
 }
 
+const ERROR_MESSAGES: Record<ApiError, string> = {
+	[ApiError.UnknownError]: "An unexpected error occurred. Please try again.",
+	[ApiError.Unauthorized]: "Your access token is invalid or has expired.",
+	[ApiError.NotFound]: "The requested build was not found.",
+	[ApiError.ServerError]:
+		"The server encountered an error. Please try again later.",
+	[ApiError.BuildNotReady]:
+		"The build is being prepared. Please wait a moment.",
+	[ApiError.RateLimited]:
+		"Too many requests. Please wait a moment and try again.",
+};
+
 export class ApiException extends Error {
 	constructor(
 		public readonly error: ApiError,
 		public readonly context: Record<string, unknown> = {}
 	) {
-		super(`API error: ${error}`);
+		super(ERROR_MESSAGES[error] || ERROR_MESSAGES[ApiError.UnknownError]);
+		this.name = "ApiException";
 	}
 }
 

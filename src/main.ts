@@ -127,7 +127,7 @@ export default class VTBetaHelper extends Plugin {
 			}
 		} catch (error) {
 			new Notice(
-				"Failed to check for Vertical Tabs Beta updates: " + e(error),
+				"Unable to check for updates: " + e(error),
 				MESSAGE_INTERVAL
 			);
 		}
@@ -140,10 +140,7 @@ export default class VTBetaHelper extends Plugin {
 			await upgrade(this.app, tag, this.settings.token);
 			new Notice(`Vertical Tabs ${tag} installed.`, MESSAGE_INTERVAL);
 		} catch (error) {
-			new Notice(
-				"Failed to upgrade Vertical Tabs Beta: " + e(error),
-				MESSAGE_INTERVAL
-			);
+			new Notice("Installation failed: " + e(error), MESSAGE_INTERVAL);
 		}
 	}
 }

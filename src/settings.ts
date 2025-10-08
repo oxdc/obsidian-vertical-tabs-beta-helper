@@ -279,7 +279,7 @@ export class VTBetaHelperSettingTab extends PluginSettingTab {
 					const offset = this.currentPage * PAGE_SIZE;
 					const response = await listBuilds(token, PAGE_SIZE, offset);
 					if (!response.success || response.data.length === 0) {
-						throw new Error("Unknown error");
+						throw new Error("No builds available.");
 					}
 					return response;
 				}
@@ -289,7 +289,7 @@ export class VTBetaHelperSettingTab extends PluginSettingTab {
 		} catch (error) {
 			buildsEl.empty();
 			buildsEl.createEl("p", {
-				text: "Failed to load builds: " + e(error),
+				text: "Unable to load builds: " + e(error),
 			});
 		}
 	}
@@ -449,7 +449,7 @@ export class VTBetaHelperSettingTab extends PluginSettingTab {
 			const subscription = await cache.fetchSubscription(async () => {
 				const response = await refreshSubscription(token);
 				if (!response || !response.success) {
-					throw new Error("Unable to load subscription");
+					throw new Error("Unable to load subscription.");
 				}
 				return response.data;
 			});
@@ -462,7 +462,7 @@ export class VTBetaHelperSettingTab extends PluginSettingTab {
 				cls: "vt-beta-subscription",
 			});
 			statusEl.toggleClass("mod-error", true);
-			statusEl.setText("Unable to load subscription.");
+			statusEl.setText("Unable to load subscription: " + e(error));
 		}
 	}
 

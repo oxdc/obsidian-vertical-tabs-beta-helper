@@ -46,14 +46,18 @@ async function downloadBuild(
 		return await retryWithBackoff(async () => {
 			const result = await apiService.downloadBuild(tag);
 			if (!isDownloadBuildSuccess(result)) {
-				throw new UpgradeException(`Invalid response`);
+				throw new UpgradeException("Invalid server response.");
 			}
 			return result;
 		}, retryConfig);
 	} catch (error) {
-		throw new UpgradeException(
-			`Failed to download build '${tag}': ${e(error)}`
-		);
+		if (
+			error instanceof ApiException ||
+			error instanceof UpgradeException
+		) {
+			throw error;
+		}
+		throw new UpgradeException(`Failed to download: ${e(error)}`);
 	}
 }
 
@@ -65,7 +69,7 @@ async function verify(binaryData: ArrayBuffer, sha256: string): Promise<void> {
 		.join("");
 	if (hashHex !== sha256) {
 		throw new UpgradeException(
-			`Binary verification failed. Expected: ${sha256}, got: ${hashHex}`
+			"File integrity check failed. The download may be corrupted."
 		);
 	}
 }
@@ -98,7 +102,9 @@ async function verifyAndUpgrade(
 		const zip = new JSZip();
 		await zip.loadAsync(binaryData);
 		if (Object.keys(zip.files).length === 0) {
-			throw new UpgradeException("Malformed ZIP archive");
+			throw new UpgradeException(
+				"The downloaded file is empty or corrupted."
+			);
 		}
 
 		// Step 3: Extract the build to the temporary directory
@@ -126,12 +132,12 @@ async function verifyAndUpgrade(
 			if (hasBackup) await cleanup(fs, backupDir);
 		} catch (error) {
 			if (hasBackup) await fs.rename(backupDir, targetDir); // Rollback
-			throw new UpgradeException(`Install failed: ${e(error)}`);
+			throw new UpgradeException(`Installation failed: ${e(error)}`);
 		}
 	} catch (error) {
 		await cleanup(fs, tempDir);
 		if (error instanceof UpgradeException) throw error;
-		throw new UpgradeException(`Upgrade failed: ${e(error)}`);
+		throw new UpgradeException(e(error));
 	}
 }
 
@@ -145,7 +151,7 @@ export async function reloadPlugin(app: App): Promise<void> {
 		await app.plugins.loadManifest(targetDir);
 		await app.plugins.enablePluginAndSave(VERTICAL_TABS_ID);
 	} catch (error) {
-		throw new UpgradeException(`Failed to reload plugin: ${e(error)}`);
+		throw new UpgradeException(`Failed to reload the plugin: ${e(error)}`);
 	}
 }
 
