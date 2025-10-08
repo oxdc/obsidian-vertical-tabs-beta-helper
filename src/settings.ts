@@ -41,6 +41,7 @@ export const DEFAULT_SETTINGS: VTBetaHelperSettings = {
 export class VTBetaHelperSettingTab extends PluginSettingTab {
 	plugin: VTBetaHelper;
 	private currentPage = 0;
+	private showAdvancedOptions = false;
 
 	constructor(app: App, plugin: VTBetaHelper) {
 		super(app, plugin);
@@ -306,29 +307,6 @@ export class VTBetaHelperSettingTab extends PluginSettingTab {
 					})
 			);
 
-		if (this.plugin.settings.autoUpdate) {
-			new Setting(parentEl)
-				.setName("Update check interval")
-				.setDesc("Set how often to check for updates.")
-				.addDropdown((dropdown) => {
-					dropdown
-						.addOption("1", "1 hour")
-						.addOption("12", "12 hours")
-						.addOption("24", "1 day")
-						.addOption("48", "2 days")
-						.addOption("168", "1 week")
-						.setValue(
-							this.plugin.settings.updateCheckInterval.toString()
-						)
-						.onChange(async (value) => {
-							this.plugin.settings.updateCheckInterval =
-								parseInt(value);
-							await this.plugin.saveSettings();
-							this.plugin.startUpdateChecker();
-						});
-				});
-		}
-
 		if (!this.plugin.settings.autoUpdate) {
 			new Setting(parentEl)
 				.setName("Show update notification")
@@ -356,6 +334,40 @@ export class VTBetaHelperSettingTab extends PluginSettingTab {
 						await this.plugin.saveSettings();
 					})
 			);
+
+		new Setting(parentEl)
+			.setName("Show advanced options")
+			.addToggle((toggle) =>
+				toggle.setValue(this.showAdvancedOptions).onChange((value) => {
+					this.showAdvancedOptions = value;
+					this.display();
+				})
+			);
+
+		if (!this.showAdvancedOptions) return;
+
+		if (this.plugin.settings.autoUpdate) {
+			new Setting(parentEl)
+				.setName("Update check interval")
+				.setDesc("Set how often to check for updates.")
+				.addDropdown((dropdown) => {
+					dropdown
+						.addOption("1", "1 hour")
+						.addOption("12", "12 hours")
+						.addOption("24", "1 day")
+						.addOption("48", "2 days")
+						.addOption("168", "1 week")
+						.setValue(
+							this.plugin.settings.updateCheckInterval.toString()
+						)
+						.onChange(async (value) => {
+							this.plugin.settings.updateCheckInterval =
+								parseInt(value);
+							await this.plugin.saveSettings();
+							this.plugin.startUpdateChecker();
+						});
+				});
+		}
 
 		new Setting(parentEl)
 			.setName("Hide security warnings")
