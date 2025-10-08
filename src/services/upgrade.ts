@@ -110,11 +110,17 @@ async function verifyAndUpgrade(
 			await fs.writeBinary(path, content);
 		}
 
-		// Step 4: Backup the existing plugin
-		const hasBackup = await fs.exists(targetDir);
-		if (hasBackup) await fs.copy(targetDir, backupDir);
+		// Step 4: Copy the existing settings file to the temporary directory
+		const settingFile = normalizePath(`${targetDir}/data.json`);
+		const hasSettingFile = await fs.exists(settingFile);
+		const tempSettingFile = normalizePath(`${tempDir}/data.json`);
+		if (hasSettingFile) await fs.copy(settingFile, tempSettingFile);
 
-		// Step 5: Install the new plugin
+		// Step 5: Backup the existing plugin
+		const hasBackup = await fs.exists(targetDir);
+		if (hasBackup) await fs.rename(targetDir, backupDir);
+
+		// Step 6: Install the new plugin
 		try {
 			await fs.rename(tempDir, targetDir);
 			if (hasBackup) await cleanup(fs, backupDir);
@@ -130,10 +136,15 @@ async function verifyAndUpgrade(
 }
 
 export async function reloadPlugin(app: App): Promise<void> {
-	if (!app.plugins.plugins[VERTICAL_TABS_ID]) return;
 	try {
-		await app.plugins.disablePlugin(VERTICAL_TABS_ID);
-		await app.plugins.enablePlugin(VERTICAL_TABS_ID);
+		if (app.plugins.getPlugin(VERTICAL_TABS_ID)) {
+			await app.plugins.disablePlugin(VERTICAL_TABS_ID);
+		}
+		const root = app.plugins.getPluginFolder();
+		const targetDir = normalizePath(`${root}/${VERTICAL_TABS_ID}`);
+		console.log("targetDir", targetDir);
+		await app.plugins.loadManifest(targetDir);
+		await app.plugins.enablePluginAndSave(VERTICAL_TABS_ID);
 	} catch (error) {
 		throw new UpgradeException(`Failed to reload plugin: ${e(error)}`);
 	}

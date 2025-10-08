@@ -7,7 +7,11 @@ import {
 	TextComponent,
 } from "obsidian";
 import { SecurityWarningConfirmationModal } from "./warning";
-import { refreshSubscription, validateToken } from "./services/auth";
+import {
+	normalizeToken,
+	refreshSubscription,
+	validateToken,
+} from "./services/auth";
 import { listBuilds } from "./services/list";
 import moment from "moment";
 import { errorToString as e } from "./common/utils";
@@ -93,7 +97,7 @@ export class VTBetaHelperSettingTab extends PluginSettingTab {
 				text.setPlaceholder("Enter your access token")
 					.setValue(this.plugin.settings.token)
 					.onChange((value) => {
-						token = value;
+						token = normalizeToken(value);
 						if (inputEl) inputEl.setCustomValidity("");
 					})
 					.setDisabled(filled);
@@ -237,14 +241,6 @@ export class VTBetaHelperSettingTab extends PluginSettingTab {
 		});
 	}
 
-	private displayErrorAndRetryButton(parentEl: HTMLElement, error: unknown) {
-		parentEl.createEl("p", { text: "Failed to load builds: " + e(error) });
-		parentEl.createEl("button", {
-			text: "Retry",
-			onclick: () => this.display(),
-		});
-	}
-
 	private displayLoadingIndicator(parentEl: HTMLElement, text: string) {
 		const loadingEl = parentEl.createDiv({ cls: "vt-beta-loading" });
 		const loadingTextEl = loadingEl.createEl("p", { cls: "mod-loading" });
@@ -280,7 +276,9 @@ export class VTBetaHelperSettingTab extends PluginSettingTab {
 			this.displayBuildList(buildsEl, result);
 		} catch (error) {
 			buildsEl.empty();
-			this.displayErrorAndRetryButton(buildsEl, error);
+			buildsEl.createEl("p", {
+				text: "Failed to load builds: " + e(error),
+			});
 		}
 	}
 
