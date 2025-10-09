@@ -212,6 +212,8 @@ export class VTBetaHelperSettingTab extends PluginSettingTab {
 		}
 
 		const totalPages = Math.ceil(total / PAGE_SIZE);
+		if (totalPages <= 1) return;
+
 		const paginationEl = new Setting(parentEl)
 			.setNoInfo()
 			.setClass("pagination");
