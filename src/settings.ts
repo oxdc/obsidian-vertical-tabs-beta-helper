@@ -532,21 +532,21 @@ export class VTBetaHelperSettingTab extends PluginSettingTab {
 		const docEl = parentEl.createEl("p", { cls: "vt-beta-doc-links" });
 		docEl
 			.createEl("a", {
-				href: "https://oxdc.github.io/obsidian-vertical-tabs-docs/Beta-Versions/terms",
+				href: "https://vertical-tabs-docs.oxdc.dev/Beta-Versions/terms",
 				text: "Terms of Service",
 			})
 			.setAttr("target", "_blank");
 		docEl.appendText(" · ");
 		docEl
 			.createEl("a", {
-				href: "https://oxdc.github.io/obsidian-vertical-tabs-docs/Beta-Versions/security",
+				href: "https://vertical-tabs-docs.oxdc.dev/Beta-Versions/security",
 				text: "Privacy Policy",
 			})
 			.setAttr("target", "_blank");
 		docEl.appendText(" · ");
 		docEl
 			.createEl("a", {
-				href: "https://oxdc.github.io/obsidian-vertical-tabs-docs/Beta-Versions/beta-faq",
+				href: "https://vertical-tabs-docs.oxdc.dev/Beta-Versions/beta-faq",
 				text: "FAQ",
 			})
 			.setAttr("target", "_blank");
