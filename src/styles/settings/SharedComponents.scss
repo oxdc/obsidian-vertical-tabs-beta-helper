@@ -1,0 +1,92 @@
+/* Header and footer */
+
+.vt-beta-header,
+.vt-beta-footer {
+	hyphens: auto;
+}
+
+.vt-beta-header h1 {
+	white-space: nowrap;
+	font-size: clamp(1rem, 2vw, 2rem);
+	max-width: 100%;
+}
+
+.vt-beta-footer,
+.vt-beta-footer * {
+	color: var(--text-faint) !important;
+	font-size: var(--font-small) !important;
+}
+
+/* Token input */
+
+.vt-beta-token {
+	.setting-item-info {
+		flex-grow: 0 !important;
+	}
+
+	.setting-item-control {
+		flex-grow: 1 !important;
+
+		input {
+			width: 100% !important;
+			opacity: 1 !important;
+		}
+
+		button {
+			width: unset !important;
+		}
+	}
+}
+
+.vt-beta-welcome .vt-beta-token {
+	border: none !important;
+	background: none !important;
+}
+
+/* Beta tag */
+
+.vt-beta-tag {
+	padding: var(--size-2-1) var(--size-4-2);
+	border-radius: var(--radius-m);
+	border: 1px solid;
+	display: inline-block;
+	margin-left: var(--size-4-1);
+	transform: rotateZ(5deg) translate(0px, -10px);
+	background: rgba(var(--color-purple-rgb), 0.2);
+	font-size: 0.6em;
+	font-weight: var(--font-medium);
+}
+
+/* Doc links */
+
+.vt-beta-doc-links a {
+	color: var(--text-normal);
+	font-size: var(--font-ui-small);
+}
+
+/* Loading indicator */
+
+.vt-loading-icon {
+	color: transparent;
+	position: relative;
+	white-space: nowrap;
+	overflow: hidden;
+	pointer-events: none;
+	margin-right: var(--size-4-6);
+
+	&::after {
+		content: "";
+		position: absolute;
+		width: 12px;
+		height: 12px;
+		top: 0;
+		left: 0;
+		right: 0;
+		bottom: 0;
+		margin: auto;
+		border: 2px solid transparent;
+		border-top-color: var(--text-normal);
+		border-radius: 50%;
+		animation: spin 1s ease infinite;
+	}
+}

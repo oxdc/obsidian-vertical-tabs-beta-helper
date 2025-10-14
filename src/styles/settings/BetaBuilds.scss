@@ -1,0 +1,95 @@
+/* Title row */
+
+.setting-item.vt-beta-builds-title {
+	flex-direction: row !important;
+
+	.setting-item-info {
+		flex-grow: 1 !important;
+		flex-shrink: 1 !important;
+	}
+
+	.setting-item-control {
+		flex-grow: 0 !important;
+		flex-shrink: 1 !important;
+		width: unset !important;
+	}
+}
+
+.vt-beta-builds {
+	/* Customizations */
+
+	.setting-item {
+		flex-direction: row !important;
+		align-items: center !important;
+
+		.setting-item-info {
+			flex-grow: 1 !important;
+			flex-shrink: 1 !important;
+		}
+
+		.setting-item-name {
+			display: flex;
+			flex-direction: row;
+			flex-wrap: wrap;
+			gap: var(--size-4-2);
+		}
+
+		.setting-item-control {
+			margin-top: 0 !important;
+			flex-grow: 0 !important;
+			width: unset !important;
+		}
+	}
+
+	.clickable-icon.is-disabled {
+		opacity: 0.5 !important;
+		cursor: not-allowed !important;
+	}
+
+	/* Pagination */
+
+	.setting-item.pagination {
+		justify-content: flex-end;
+		flex-direction: column !important;
+
+		.setting-item-control {
+			flex-grow: 1 !important;
+		}
+	}
+
+	/* Tags */
+
+	.setting-item a.tag {
+		cursor: normal !important;
+	}
+
+	/* Loading indicator */
+
+	.setting-item .setting-item-control .mod-loading {
+		color: transparent;
+		position: relative;
+		white-space: nowrap;
+		overflow: hidden;
+		pointer-events: none;
+
+		svg {
+			visibility: hidden !important;
+		}
+
+		&::after {
+			content: "";
+			position: absolute;
+			width: 12px;
+			height: 12px;
+			top: 0;
+			left: 0;
+			right: 0;
+			bottom: 0;
+			margin: auto;
+			border: 2px solid transparent;
+			border-top-color: var(--text-normal);
+			border-radius: 50%;
+			animation: spin 1s ease infinite;
+		}
+	}
+}
