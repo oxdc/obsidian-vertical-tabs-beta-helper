@@ -23,7 +23,7 @@ const context = await esbuild.context({
 	},
 	define: {
 		"process.env.BETA_SERVER": JSON.stringify(
-			process.env.BETA_SERVER || "https://vertical-tabs-prod.oxdc.dev"
+			process.env.BETA_SERVER || "vertical-tabs-prod.oxdc.dev"
 		),
 		"process.env.USER_AGENT_VERSION": JSON.stringify(
 			process.env.USER_AGENT_VERSION || packageJson.version
