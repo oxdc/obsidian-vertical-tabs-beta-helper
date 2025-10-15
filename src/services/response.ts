@@ -53,6 +53,15 @@ export type BuildRequestNotReadyResponse = {
 	data: PendingJobDetails;
 };
 
+export type HelperVersionTooOldResponse = {
+	success: false;
+	code: "HELPER_VERSION_TOO_OLD";
+	error: string;
+	data: {
+		required_version: string;
+	};
+};
+
 export type DownloadBuildSuccess = {
 	response: RequestUrlResponse;
 	sha256: string;
@@ -61,6 +70,7 @@ export type DownloadBuildSuccess = {
 export type DownloadBuildResult =
 	| DownloadBuildSuccess
 	| BuildRequestNotReadyResponse
+	| HelperVersionTooOldResponse
 	| ErrorResponse;
 
 export function isDownloadBuildSuccess(

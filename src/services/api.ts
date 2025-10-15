@@ -7,6 +7,7 @@ import type {
 	BuildRequestNotReadyResponse,
 	DownloadBuildResult,
 	DownloadBuildSuccess,
+	HelperVersionTooOldResponse,
 } from "./response";
 
 const BETA_SERVER = process.env.BETA_SERVER;
@@ -19,6 +20,7 @@ export enum ApiError {
 	ServerError = "ServerError",
 	BuildNotReady = "BuildNotReady",
 	RateLimited = "RateLimited",
+	HelperVersionTooOld = "HelperVersionTooOld",
 }
 
 const ERROR_MESSAGES: Record<ApiError, string> = {
@@ -30,6 +32,8 @@ const ERROR_MESSAGES: Record<ApiError, string> = {
 	[ApiError.BuildNotReady]: "The build is being prepared. Please wait %hint.",
 	[ApiError.RateLimited]:
 		"Too many requests. Please wait a moment and try again.",
+	[ApiError.HelperVersionTooOld]:
+		"Your Beta Helper plugin version is too old. Please upgrade to %required_version.",
 };
 
 function formatRetryTime(seconds: number | null): string {
@@ -60,6 +64,10 @@ export class ApiException extends Error {
 		if (error === ApiError.BuildNotReady) {
 			const hint = formatRetryTime(context.retry_after as number | null);
 			message = message.replace("%hint", hint);
+		} else if (error === ApiError.HelperVersionTooOld) {
+			const requiredVersion =
+				(context.required_version as string) || "the latest version";
+			message = message.replace("%required_version", requiredVersion);
 		}
 		super(message);
 		this.name = "ApiException";
@@ -172,6 +180,13 @@ export class ApiService {
 				throw new ApiException(ApiError.Unauthorized);
 			case 404:
 				throw new ApiException(ApiError.NotFound);
+			case 426: {
+				const { data } = response.json as HelperVersionTooOldResponse;
+				const { required_version } = data;
+				throw new ApiException(ApiError.HelperVersionTooOld, {
+					required_version,
+				});
+			}
 			case 429:
 				throw new ApiException(ApiError.RateLimited);
 			case 500:
