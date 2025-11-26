@@ -1,6 +1,6 @@
 {
 	"name": "vertical-tabs-beta-helper",
-	"version": "1.1.0",
+	"version": "1.2.0",
 	"description": "Utility plugin for managing Vertical Tabs beta versions",
 	"main": "main.js",
 	"scripts": {
