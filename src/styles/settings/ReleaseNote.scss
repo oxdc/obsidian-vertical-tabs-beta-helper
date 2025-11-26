@@ -2,4 +2,9 @@
 	max-height: 350px;
 	overflow: scroll;
 	padding: 0 var(--size-4-2) !important;
+	font-size: var(--font-ui-medium) !important;
+
+	h2 {
+		font-size: var(--font-ui-large) !important;
+	}
 }

@@ -18,7 +18,7 @@ export class ReleaseNoteModal extends Modal {
 	onOpen() {
 		const { contentEl } = this;
 		contentEl.empty();
-		contentEl.createEl("h2", { text: `What's new in ${this.build.tag}` });
+		this.setTitle(`Vertical Tabs ${this.build.tag}`);
 		const releaseNote = this.build.release_note;
 		if (!releaseNote) {
 			contentEl.createEl("p", { text: "No release notes available." });

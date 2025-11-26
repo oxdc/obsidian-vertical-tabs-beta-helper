@@ -553,6 +553,13 @@ export class VTBetaHelperSettingTab extends PluginSettingTab {
 		docEl.appendText(" · ");
 		docEl
 			.createEl("a", {
+				href: "https://status.oxdc.dev",
+				text: "Status",
+			})
+			.setAttr("target", "_blank");
+		docEl.appendText(" · ");
+		docEl
+			.createEl("a", {
 				href: "https://ko-fi.com/oxdcq",
 				text: "Ko-fi",
 			})
