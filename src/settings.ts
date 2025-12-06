@@ -431,7 +431,7 @@ export class VTBetaHelperSettingTab extends PluginSettingTab {
 		subscription: SubscriptionData
 	) {
 		const statusEl = parentEl.createDiv({ cls: "vt-beta-subscription" });
-		const { email, expires_at } = subscription;
+		const { email, expires_at, valid } = subscription;
 		const expiryDate = moment(expires_at);
 		const expiryDateText = expiryDate.format("L");
 
@@ -446,6 +446,37 @@ export class VTBetaHelperSettingTab extends PluginSettingTab {
 		});
 		expiryEl.appendText("Valid until ");
 		expiryEl.createEl("code", { cls: "mod-info", text: expiryDateText });
+		if (!valid) {
+			expiryEl.appendText(" ");
+			expiryEl.createEl("span", {
+				cls: "mod-warning",
+				text: `(expired ${expiryDate.fromNow()})`,
+			});
+		}
+
+		const reminderEl = statusEl.createDiv({
+			cls: "vt-beta-subscription-expiration-reminder",
+		});
+		if (!valid) {
+			const deletionDate = expiryDate.clone().add(90, "days");
+			const daysUntilDeletion = deletionDate.diff(moment(), "days");
+			const deletionDateText = deletionDate.format("MMM Do, YYYY");
+			if (daysUntilDeletion > 0) {
+				reminderEl.setText(
+					`Please renew by ${deletionDateText} (${deletionDate.fromNow()}) to keep 
+					 your account. If your account is deleted, resubscribing will create a
+					 new account with a new token that you'll need to enter on all your devices.`
+				);
+			} else {
+				reminderEl.setText(
+					`Your account has been deleted for privacy reasons. If you resubscribe,
+					 a new account will be created with a new token that you'll need to use
+					 on all your devices.`
+				);
+			}
+		} else {
+			reminderEl.setText("");
+		}
 	}
 
 	private async displaySubscriptionStatus(parentEl: HTMLElement) {
