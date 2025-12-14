@@ -160,15 +160,15 @@ export async function reloadPlugin(app: App): Promise<void> {
 
 export async function install(
 	app: App,
-	current: string,
+	current: string | null,
 	tag: string,
 	token: string,
 	manual = false
 ): Promise<void> {
 	const apiService = new ApiService(token);
 	const result = await downloadBuild(apiService, tag, manual);
-	await runPreinstallationTasks(app, current, tag);
+	if (current) await runPreinstallationTasks(app, current, tag);
 	await verifyAndInstall(app, result);
-	await runPostinstallationTasks(app, current, tag);
+	if (current) await runPostinstallationTasks(app, current, tag);
 	await reloadPlugin(app);
 }
