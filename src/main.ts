@@ -138,7 +138,8 @@ export default class VTBetaHelper extends Plugin {
 		if (!this.settings.token) return;
 		try {
 			new Notice(`Installing Vertical Tabs ${tag}...`, MESSAGE_INTERVAL);
-			await install(this.app, tag, this.settings.token, manual);
+			const current = this.getCurrentVersion() ?? "";
+			await install(this.app, current, tag, this.settings.token, manual);
 			new Notice(`Vertical Tabs ${tag} installed.`, MESSAGE_INTERVAL);
 		} catch (error) {
 			new Notice("Installation failed: " + e(error), MESSAGE_INTERVAL);

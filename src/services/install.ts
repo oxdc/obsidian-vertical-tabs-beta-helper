@@ -8,6 +8,7 @@ import {
 	retryWithBackoff,
 } from "../common/utils";
 import JSZip from "jszip";
+import { runPostinstallationTasks, runPreinstallationTasks } from "./migration";
 
 const VERTICAL_TABS_ID = "vertical-tabs";
 const RETRY_DELAY = 1000;
@@ -159,12 +160,15 @@ export async function reloadPlugin(app: App): Promise<void> {
 
 export async function install(
 	app: App,
+	current: string,
 	tag: string,
 	token: string,
 	manual = false
 ): Promise<void> {
 	const apiService = new ApiService(token);
 	const result = await downloadBuild(apiService, tag, manual);
+	await runPreinstallationTasks(app, current, tag);
 	await verifyAndInstall(app, result);
+	await runPostinstallationTasks(app, current, tag);
 	await reloadPlugin(app);
 }
