@@ -13,10 +13,10 @@ const VERTICAL_TABS_ID = "vertical-tabs";
 const RETRY_DELAY = 1000;
 const RETRYABLE_ERRORS = [ApiError.ServerError, ApiError.UnknownError];
 
-export class UpgradeException extends Error {
+export class InstallException extends Error {
 	constructor(message: string) {
 		super(message);
-		this.name = "UpgradeException";
+		this.name = "InstallException";
 	}
 }
 
@@ -48,18 +48,18 @@ async function downloadBuild(
 		return await retryWithBackoff(async () => {
 			const result = await apiService.downloadBuild(tag);
 			if (!isDownloadBuildSuccess(result)) {
-				throw new UpgradeException("Invalid server response.");
+				throw new InstallException("Invalid server response.");
 			}
 			return result;
 		}, retryConfig);
 	} catch (error) {
 		if (
 			error instanceof ApiException ||
-			error instanceof UpgradeException
+			error instanceof InstallException
 		) {
 			throw error;
 		}
-		throw new UpgradeException(`Failed to download: ${e(error)}`);
+		throw new InstallException(`Failed to download: ${e(error)}`);
 	}
 }
 
@@ -70,7 +70,7 @@ async function verify(binaryData: ArrayBuffer, sha256: string): Promise<void> {
 		.map((b) => b.toString(16).padStart(2, "0"))
 		.join("");
 	if (hashHex !== sha256) {
-		throw new UpgradeException(
+		throw new InstallException(
 			"File integrity check failed. The download may be corrupted."
 		);
 	}
@@ -84,7 +84,7 @@ async function cleanup(fs: DataAdapter, tempDir: string): Promise<void> {
 	}
 }
 
-async function verifyAndUpgrade(
+async function verifyAndInstall(
 	app: App,
 	result: DownloadBuildSuccess
 ): Promise<void> {
@@ -104,7 +104,7 @@ async function verifyAndUpgrade(
 		const zip = new JSZip();
 		await zip.loadAsync(binaryData);
 		if (Object.keys(zip.files).length === 0) {
-			throw new UpgradeException(
+			throw new InstallException(
 				"The downloaded file is empty or corrupted."
 			);
 		}
@@ -134,12 +134,12 @@ async function verifyAndUpgrade(
 			if (hasBackup) await cleanup(fs, backupDir);
 		} catch (error) {
 			if (hasBackup) await fs.rename(backupDir, targetDir); // Rollback
-			throw new UpgradeException(`Installation failed: ${e(error)}`);
+			throw new InstallException(`Installation failed: ${e(error)}`);
 		}
 	} catch (error) {
 		await cleanup(fs, tempDir);
-		if (error instanceof UpgradeException) throw error;
-		throw new UpgradeException(e(error));
+		if (error instanceof InstallException) throw error;
+		throw new InstallException(e(error));
 	}
 }
 
@@ -153,11 +153,11 @@ export async function reloadPlugin(app: App): Promise<void> {
 		await app.plugins.loadManifest(targetDir);
 		await app.plugins.enablePluginAndSave(VERTICAL_TABS_ID);
 	} catch (error) {
-		throw new UpgradeException(`Failed to reload the plugin: ${e(error)}`);
+		throw new InstallException(`Failed to reload the plugin: ${e(error)}`);
 	}
 }
 
-export async function upgrade(
+export async function install(
 	app: App,
 	tag: string,
 	token: string,
@@ -165,6 +165,6 @@ export async function upgrade(
 ): Promise<void> {
 	const apiService = new ApiService(token);
 	const result = await downloadBuild(apiService, tag, manual);
-	await verifyAndUpgrade(app, result);
+	await verifyAndInstall(app, result);
 	await reloadPlugin(app);
 }

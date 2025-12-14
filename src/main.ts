@@ -5,7 +5,7 @@ import {
 	DEFAULT_SETTINGS,
 } from "./settings";
 import { validateToken, normalizeToken } from "./services/auth";
-import { upgrade } from "./services/upgrade";
+import { install } from "./services/install";
 import { listBuilds } from "./services/list";
 import { errorToString as e } from "./common/utils";
 import { ReleaseNoteModal } from "./release_note";
@@ -112,7 +112,7 @@ export default class VTBetaHelper extends Plugin {
 			if (latestBuild.tag !== currentVersion) {
 				if (this.settings.autoUpdate) {
 					if (!currentVersion) return;
-					await this.upgradeToVersion(latestBuild.tag);
+					await this.installVersion(latestBuild.tag);
 					if (
 						this.settings.showReleaseNotes &&
 						latestBuild.release_note
@@ -134,11 +134,11 @@ export default class VTBetaHelper extends Plugin {
 		}
 	}
 
-	async upgradeToVersion(tag: string, manual = false): Promise<void> {
+	async installVersion(tag: string, manual = false): Promise<void> {
 		if (!this.settings.token) return;
 		try {
 			new Notice(`Installing Vertical Tabs ${tag}...`, MESSAGE_INTERVAL);
-			await upgrade(this.app, tag, this.settings.token, manual);
+			await install(this.app, tag, this.settings.token, manual);
 			new Notice(`Vertical Tabs ${tag} installed.`, MESSAGE_INTERVAL);
 		} catch (error) {
 			new Notice("Installation failed: " + e(error), MESSAGE_INTERVAL);
