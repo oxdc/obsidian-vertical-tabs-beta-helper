@@ -14,7 +14,8 @@ type Migration = {
 
 class MigrationRegistry {
 	private static instance: MigrationRegistry;
-	private migrations: Map<MigrationQualifier, Migration> = new Map();
+	private migrations: Migration[] = [];
+	private migrationsLoaded = false;
 
 	private constructor() {}
 
@@ -26,29 +27,43 @@ class MigrationRegistry {
 	}
 
 	registerMigration(migration: Migration): void {
-		this.migrations.set(migration.qualifier, migration);
+		this.migrations.push(migration);
 	}
 
-	queryMigrations(fromVersion: string, toVersion: string): Migration[] {
+	private async ensureMigrationsLoaded(): Promise<void> {
+		if (!this.migrationsLoaded) {
+			await import("../migrations");
+			this.migrationsLoaded = true;
+		}
+	}
+
+	async queryMigrations(
+		fromVersion: string,
+		toVersion: string
+	): Promise<Migration[]> {
+		await this.ensureMigrationsLoaded();
 		const realFromVersion = fromVersion.replace(/-beta-\d+$/, "");
 		const realToVersion = toVersion.replace(/-beta-\d+$/, "");
 		const isUpgrade = semver.lt(realFromVersion, realToVersion);
 
-		return Array.from(this.migrations.values()).filter((migration) => {
+		return this.migrations.filter((migration) => {
 			const mFrom = migration.qualifier.fromVersion;
 			const mTo = migration.qualifier.toVersion;
+			const migrationIsUpgrade = semver.lt(mFrom, mTo);
 
 			if (isUpgrade) {
 				// For upgrades: find migrations that bridge from old to new version
 				return (
-					semver.lte(mFrom, realFromVersion) &&
-					semver.lte(realToVersion, mTo)
+					migrationIsUpgrade &&
+					semver.lte(realFromVersion, mFrom) &&
+					semver.gte(realToVersion, mTo)
 				);
 			} else {
 				// For downgrades: find migrations that bridge from new to old version
 				return (
-					semver.lte(mTo, realFromVersion) &&
-					semver.lte(realToVersion, mFrom)
+					!migrationIsUpgrade &&
+					semver.gte(realFromVersion, mFrom) &&
+					semver.lte(realToVersion, mTo)
 				);
 			}
 		});
@@ -59,12 +74,14 @@ export const migrationRegistry = MigrationRegistry.getInstance();
 
 // prettier-ignore
 export async function runPreinstallationTasks(app: App, fromVersion: string, toVersion: string): Promise<void> {
-	const migrations = migrationRegistry.queryMigrations(fromVersion, toVersion);
+	const migrations = await migrationRegistry.queryMigrations(fromVersion, toVersion);
+  console.log(`[Migration] Running pre-installation tasks for ${fromVersion} to ${toVersion}: ${migrations.length} migrations`);
 	for (const migration of migrations) await migration.preInstallationTasks(app);
 }
 
 // prettier-ignore
 export async function runPostinstallationTasks(app: App, fromVersion: string, toVersion: string): Promise<void> {
-	const migrations = migrationRegistry.queryMigrations(fromVersion, toVersion);
+	const migrations = await migrationRegistry.queryMigrations(fromVersion, toVersion);
+	console.log(`[Migration] Running post-installation tasks for ${fromVersion} to ${toVersion}: ${migrations.length} migrations`);
 	for (const migration of migrations) await migration.postInstallationTasks(app);
 }
