@@ -20,8 +20,8 @@
 		"builtin-modules": "3.3.0",
 		"dotenv": "^17.2.3",
 		"esbuild": "^0.25.0",
-		"obsidian": "latest",
-		"obsidian-typings": "^4.50.0",
+		"obsidian": "^1.11.0",
+		"obsidian-typings": "^4.81.0",
 		"tslib": "2.4.0",
 		"typescript": "^5.6.0"
 	},

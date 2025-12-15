@@ -9,9 +9,12 @@
 	}
 
 	.setting-item-control {
-		flex-grow: 0 !important;
 		flex-shrink: 1 !important;
 		width: unset !important;
+	}
+
+	&:not(.new-design) .setting-item-control {
+		flex-grow: 0 !important;
 	}
 }
 

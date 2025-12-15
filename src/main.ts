@@ -1,4 +1,4 @@
-import { Notice, Plugin } from "obsidian";
+import { addIcon, Notice, Plugin } from "obsidian";
 import {
 	VTBetaHelperSettings,
 	VTBetaHelperSettingTab,
@@ -9,6 +9,7 @@ import { install } from "./services/install";
 import { listBuilds } from "./services/list";
 import { errorToString as e } from "./common/utils";
 import { ReleaseNoteModal } from "./release_note";
+import { VERTICAL_TABS_BETA_HELPER_ICON } from "./icon";
 
 const MESSAGE_INTERVAL = 10000; // 10 seconds
 const VERTICAL_TABS_ID = "vertical-tabs";
@@ -21,6 +22,7 @@ export default class VTBetaHelper extends Plugin {
 	// Public - Lifecycle Methods
 
 	async onload() {
+		addIcon("vertical-tabs-beta-helper", VERTICAL_TABS_BETA_HELPER_ICON);
 		await this.loadSettings();
 		this.addSettingTab(new VTBetaHelperSettingTab(this.app, this));
 		this.registerObsidianProtocolHandler(

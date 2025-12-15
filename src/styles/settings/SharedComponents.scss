@@ -5,16 +5,30 @@
 	hyphens: auto;
 }
 
-.vt-beta-header h1 {
-	white-space: nowrap;
-	font-size: clamp(1rem, 2vw, 2rem);
-	max-width: 100%;
+.vt-beta-header {
+	h1 {
+		display: block !important;
+		white-space: nowrap;
+		font-size: clamp(1rem, 2vw, 2rem);
+		max-width: 100%;
+	}
+
+	&.new-design {
+		p {
+			padding: 0 var(--size-4-4);
+			margin-bottom: var(--size-4-6);
+		}
+	}
 }
 
 .vt-beta-footer,
 .vt-beta-footer * {
 	color: var(--text-faint) !important;
 	font-size: var(--font-small) !important;
+}
+
+.vt-beta-footer.new-design {
+	padding: 0 var(--size-4-4);
 }
 
 /* Token input */
@@ -59,9 +73,16 @@
 
 /* Doc links */
 
-.vt-beta-doc-links a {
-	color: var(--text-normal);
-	font-size: var(--font-ui-small);
+.vt-beta-doc-links {
+	a {
+		color: var(--text-normal);
+		font-size: var(--font-ui-small);
+	}
+
+	&.new-design {
+		margin-top: var(--size-4-6);
+		padding: 0 var(--size-4-4);
+	}
 }
 
 /* Loading indicator */
