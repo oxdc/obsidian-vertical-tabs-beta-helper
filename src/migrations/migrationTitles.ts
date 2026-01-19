@@ -1,6 +1,6 @@
-import Dexie, { Table } from "dexie";
 import { App } from "obsidian";
 import { migrationRegistry } from "src/services/migration";
+import { Database, Table } from "src/utils/IndexedDBWrapper";
 
 interface GroupMetadata {
 	id: string;
@@ -9,16 +9,22 @@ interface GroupMetadata {
 	title?: string;
 }
 
-class MetadataDatabase extends Dexie {
-	groupMetadata!: Table<GroupMetadata, string>;
+const dbInstance = new Database("VerticalTabsMetadata");
+dbInstance.version(1).stores({
+	groupMetadata: "id",
+});
 
-	constructor() {
-		super("VerticalTabsMetadata");
-		this.version(1).stores({
-			tabMetadata: "id",
-			groupMetadata: "id",
-		});
-	}
+const db = dbInstance as unknown as {
+	groupMetadata: Table<GroupMetadata>;
+};
+
+async function getAllGroupMetadata(): Promise<GroupMetadata[]> {
+	return db.groupMetadata.toArray();
+}
+
+async function bulkPutGroupMetadata(items: GroupMetadata[]): Promise<void> {
+	if (items.length === 0) return;
+	for (const item of items) await db.groupMetadata.put(item);
 }
 
 /**
@@ -54,7 +60,6 @@ export async function migrateGroupTitlesToIndexDB(): Promise<void> {
 			return;
 		}
 
-		const db = new MetadataDatabase();
 		const groupsToMigrate: GroupMetadata[] = [];
 
 		for (const key of viewStateKeys) {
@@ -72,7 +77,7 @@ export async function migrateGroupTitlesToIndexDB(): Promise<void> {
 		}
 
 		if (groupsToMigrate.length > 0) {
-			await db.groupMetadata.bulkPut(groupsToMigrate);
+			await bulkPutGroupMetadata(groupsToMigrate);
 			console.log(
 				`[Migration] Migrated ${groupsToMigrate.length} group titles to IndexedDB from ${viewStateKeys.length} key(s)`
 			);
@@ -81,8 +86,6 @@ export async function migrateGroupTitlesToIndexDB(): Promise<void> {
 				"[Migration] No custom group titles to migrate (all were default)"
 			);
 		}
-
-		db.close();
 	} catch (error) {
 		console.error("[Migration] Failed to migrate group titles:", error);
 		throw error;
@@ -100,12 +103,10 @@ export async function migrateGroupTitlesToIndexDB(): Promise<void> {
  */
 export async function migrateGroupTitlesFromIndexDB(): Promise<void> {
 	try {
-		const db = new MetadataDatabase();
-		const allMetadata = await db.groupMetadata.toArray();
+		const allMetadata = await getAllGroupMetadata();
 
 		if (!allMetadata || allMetadata.length === 0) {
 			console.log("[Migration] No group metadata found in IndexedDB");
-			db.close();
 			return;
 		}
 
@@ -134,8 +135,6 @@ export async function migrateGroupTitlesFromIndexDB(): Promise<void> {
 		} else {
 			console.log("[Migration] No custom titles found in IndexedDB");
 		}
-
-		db.close();
 	} catch (error) {
 		console.error(
 			"[Migration] Failed to migrate group titles from IndexedDB:",
@@ -175,13 +174,32 @@ export function cleanupGroupTitlesLocalStorage(): void {
  * both tab and group metadata (colors, icons, custom titles).
  */
 export async function cleanupIndexDB(): Promise<void> {
-	try {
-		await Dexie.delete("VerticalTabsMetadata");
-		console.log("[Cleanup] Deleted VerticalTabsMetadata IndexedDB");
-	} catch (error) {
-		console.error("[Cleanup] Failed to delete IndexedDB:", error);
-		throw error;
-	}
+	return new Promise((resolve, reject) => {
+		const request = indexedDB.deleteDatabase("VerticalTabsMetadata");
+
+		request.onsuccess = () => {
+			console.log("[Cleanup] Deleted VerticalTabsMetadata IndexedDB");
+			resolve();
+		};
+
+		request.onerror = () => {
+			const error = new Error(
+				`Failed to delete IndexedDB: ${
+					request.error?.message || "Unknown error"
+				}`
+			);
+			console.error("[Cleanup] Failed to delete IndexedDB:", error);
+			reject(error);
+		};
+
+		request.onblocked = () => {
+			const error = new Error(
+				"Failed to delete IndexedDB: database is blocked by open connections"
+			);
+			console.error("[Cleanup] Failed to delete IndexedDB:", error);
+			reject(error);
+		};
+	});
 }
 
 // Upgrading from <=0.17.4 to >=0.18.0
