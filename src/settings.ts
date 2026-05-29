@@ -664,7 +664,7 @@ export class VTBetaHelperSettingTab extends PluginSettingTab {
 		parentEl: HTMLElement,
 		subscription: SubscriptionData
 	) {
-		const statusEl = parentEl.createDiv({ cls: "vt-beta-subscription" });
+		const statusEl = parentEl.createDiv({ cls: "vt-beta-subscription setting-item" });
 		const { email, expires_at, valid } = subscription;
 		const expiryDate = moment(expires_at);
 		const expiryDateText = expiryDate.format("L");
