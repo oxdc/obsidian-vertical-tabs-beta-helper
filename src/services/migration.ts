@@ -8,6 +8,7 @@ type MigrationQualifier = {
 
 type Migration = {
 	qualifier: MigrationQualifier;
+	order?: number;  // Lower runs first on upgrade; higher runs first on downgrade.
 	preInstallationTasks: (app: App) => Promise<void>;
 	postInstallationTasks: (app: App) => Promise<void>;
 };
@@ -46,7 +47,7 @@ class MigrationRegistry {
 		const realToVersion = toVersion.replace(/-beta-\d+$/, "");
 		const isUpgrade = semver.lt(realFromVersion, realToVersion);
 
-		return this.migrations.filter((migration) => {
+		const matched = this.migrations.filter((migration) => {
 			const mFrom = migration.qualifier.fromVersion;
 			const mTo = migration.qualifier.toVersion;
 			const migrationIsUpgrade = semver.lt(mFrom, mTo);
@@ -66,6 +67,12 @@ class MigrationRegistry {
 					semver.lte(realToVersion, mTo)
 				);
 			}
+		});
+
+		return matched.sort((a, b) => {
+			const orderA = a.order ?? 0;
+			const orderB = b.order ?? 0;
+			return isUpgrade ? orderA - orderB : orderB - orderA;
 		});
 	}
 }

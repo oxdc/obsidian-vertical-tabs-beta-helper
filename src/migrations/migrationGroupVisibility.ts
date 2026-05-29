@@ -227,6 +227,7 @@ migrationRegistry.registerMigration({
 		fromVersion: "0.23.1",
 		toVersion: "0.24.0",
 	},
+	order: 1,
 	preInstallationTasks: async (app: App) => {
 		console.log("[Migration] Pre-installation tasks for upgrading from <=0.23.1 to >=0.24.0 (group visibility)");
 		await migrateGroupVisibilityToIndexDB();
@@ -244,6 +245,7 @@ migrationRegistry.registerMigration({
 		fromVersion: "0.24.0",
 		toVersion: "0.23.1",
 	},
+	order: 1,
 	preInstallationTasks: async (app: App) => {
 		console.log("[Migration] Pre-installation tasks for downgrading from >=0.24.0 to <=0.23.1 (group visibility)");
 		await migrateGroupVisibilityFromIndexDB();
