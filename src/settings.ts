@@ -340,7 +340,8 @@ export class VTBetaHelperSettingTab extends PluginSettingTab {
 			this.displayBuildList(buildsEl, result);
 		} catch (error) {
 			buildsEl.empty();
-			buildsEl.createEl("p", {
+			buildsEl.createEl("div", {
+				cls: "setting-item",
 				text: "Unable to load builds: " + e(error),
 			});
 		}
@@ -348,13 +349,18 @@ export class VTBetaHelperSettingTab extends PluginSettingTab {
 
 	private displayLoadingIndicator(parentEl: HTMLElement, text: string) {
 		const loadingEl = parentEl.createDiv({ cls: "vt-beta-loading" });
-		const loadingTextEl = loadingEl.createEl("p", { cls: "mod-loading" });
+		const loadingTextEl = loadingEl.createEl("div", {
+			cls: "mod-loading setting-item",
+		});
 		loadingTextEl.createSpan({ cls: "vt-loading-icon" });
 		loadingTextEl.appendText(text);
 	}
 
 	private displayEmptyList(parentEl: HTMLElement) {
-		parentEl.createEl("p", { text: "No builds available." });
+		parentEl.createEl("div", {
+			cls: "setting-item",
+			text: "No builds available.",
+		});
 	}
 
 	private displayBuildList(parentEl: HTMLElement, result: BuildsResult) {
@@ -631,7 +637,7 @@ export class VTBetaHelperSettingTab extends PluginSettingTab {
 	) {
 		const containerEl =
 			container instanceof HTMLElement ? container : container.listEl;
-		const subscriptionEl = containerEl.createDiv();
+		const subscriptionEl = containerEl.createDiv({ cls: "setting-item" });
 		const token = this.plugin.settings.token;
 
 		this.displayLoadingIndicator(
@@ -664,7 +670,7 @@ export class VTBetaHelperSettingTab extends PluginSettingTab {
 		parentEl: HTMLElement,
 		subscription: SubscriptionData
 	) {
-		const statusEl = parentEl.createDiv({ cls: "vt-beta-subscription setting-item" });
+		const statusEl = parentEl.createDiv({ cls: "vt-beta-subscription" });
 		const { email, expires_at, valid } = subscription;
 		const expiryDate = moment(expires_at);
 		const expiryDateText = expiryDate.format("L");

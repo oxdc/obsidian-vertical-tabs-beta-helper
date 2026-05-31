@@ -88,12 +88,14 @@
 /* Loading indicator */
 
 .vt-loading-icon {
+	height: 1rem;
+    width: 1rem;
 	color: transparent;
 	position: relative;
 	white-space: nowrap;
 	overflow: hidden;
 	pointer-events: none;
-	margin-right: var(--size-4-6);
+	margin-right: var(--size-4-6) !important;
 
 	&::after {
 		content: "";
