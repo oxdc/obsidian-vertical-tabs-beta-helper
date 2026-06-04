@@ -73,8 +73,6 @@ export type DownloadBuildResult =
 	| HelperVersionTooOldResponse
 	| ErrorResponse;
 
-export function isDownloadBuildSuccess(
-	result: DownloadBuildResult
-): result is DownloadBuildSuccess {
+export function isDownloadBuildSuccess(result: DownloadBuildResult): result is DownloadBuildSuccess {
 	return "response" in result && "sha256" in result;
 }

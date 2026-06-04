@@ -32,10 +32,7 @@ function stripVaultId(record: MetadataRecord): MetadataRecord {
 	return copy;
 }
 
-function withVaultId<T extends MetadataRecord>(
-	record: Omit<T, "vaultId">,
-	vaultId: string
-): T {
+function withVaultId<T extends MetadataRecord>(record: Omit<T, "vaultId">, vaultId: string): T {
 	return { ...record, vaultId } as T;
 }
 
@@ -45,10 +42,7 @@ function openDb(dbName: string) {
 		tabMetadata: "id",
 		groupMetadata: "id",
 	});
-	return dbInstance as unknown as Record<
-		MetadataStoreName,
-		Table<MetadataRecord>
-	>;
+	return dbInstance as unknown as Record<MetadataStoreName, Table<MetadataRecord>>;
 }
 
 async function deleteDatabase(dbName: string): Promise<void> {
@@ -57,20 +51,10 @@ async function deleteDatabase(dbName: string): Promise<void> {
 
 		request.onsuccess = () => resolve();
 		request.onerror = () => {
-			reject(
-				new Error(
-					`Failed to delete IndexedDB "${dbName}": ${
-						request.error?.message || "Unknown error"
-					}`
-				)
-			);
+			reject(new Error(`Failed to delete IndexedDB "${dbName}": ${request.error?.message || "Unknown error"}`));
 		};
 		request.onblocked = () => {
-			reject(
-				new Error(
-					`Failed to delete IndexedDB "${dbName}": database is blocked by open connections`
-				)
-			);
+			reject(new Error(`Failed to delete IndexedDB "${dbName}": database is blocked by open connections`));
 		};
 	});
 }
@@ -82,10 +66,7 @@ async function listVaultDatabaseNames(): Promise<string[]> {
 	const databases = await indexedDB.databases();
 	return databases
 		.map((database) => database.name)
-		.filter(
-			(name): name is string =>
-				!!name && name.startsWith(VAULT_DB_PREFIX)
-		);
+		.filter((name): name is string => !!name && name.startsWith(VAULT_DB_PREFIX));
 }
 
 async function writeRecordsToVault(
@@ -105,9 +86,7 @@ async function writeRecordsToVault(
 /**
  * Splits the shared IndexedDB into per-vault databases keyed by vaultId.
  */
-export async function migrateMetadataToVaultDatabases(
-	app: App
-): Promise<void> {
+export async function migrateMetadataToVaultDatabases(app: App): Promise<void> {
 	try {
 		const legacyDb = openDb(LEGACY_DB_NAME);
 		const [tabRecords, groupRecords] = await Promise.all([
@@ -116,9 +95,7 @@ export async function migrateMetadataToVaultDatabases(
 		]);
 
 		if (tabRecords.length === 0 && groupRecords.length === 0) {
-			console.log(
-				"[Migration] No metadata found in legacy IndexedDB to split by vault"
-			);
+			console.log("[Migration] No metadata found in legacy IndexedDB to split by vault");
 			return;
 		}
 
@@ -145,26 +122,15 @@ export async function migrateMetadataToVaultDatabases(
 		let groupCount = 0;
 
 		for (const vaultId of vaultIds) {
-			tabCount += await writeRecordsToVault(
-				vaultId,
-				"tabMetadata",
-				tabByVault.get(vaultId) ?? []
-			);
-			groupCount += await writeRecordsToVault(
-				vaultId,
-				"groupMetadata",
-				groupByVault.get(vaultId) ?? []
-			);
+			tabCount += await writeRecordsToVault(vaultId, "tabMetadata", tabByVault.get(vaultId) ?? []);
+			groupCount += await writeRecordsToVault(vaultId, "groupMetadata", groupByVault.get(vaultId) ?? []);
 		}
 
 		console.log(
 			`[Migration] Migrated ${tabCount} tab and ${groupCount} group metadata record(s) into ${vaultIds.size} vault database(s)`
 		);
 	} catch (error) {
-		console.error(
-			"[Migration] Failed to migrate metadata to per-vault IndexedDB:",
-			error
-		);
+		console.error("[Migration] Failed to migrate metadata to per-vault IndexedDB:", error);
 		throw error;
 	}
 }
@@ -176,9 +142,7 @@ export async function migrateMetadataFromVaultDatabases(): Promise<void> {
 	try {
 		const vaultDbNames = await listVaultDatabaseNames();
 		if (vaultDbNames.length === 0) {
-			console.log(
-				"[Migration] No per-vault IndexedDB databases found to merge"
-			);
+			console.log("[Migration] No per-vault IndexedDB databases found to merge");
 			return;
 		}
 
@@ -195,16 +159,12 @@ export async function migrateMetadataFromVaultDatabases(): Promise<void> {
 			]);
 
 			for (const record of tabRecords) {
-				await legacyDb.tabMetadata.put(
-					withVaultId(record, vaultId)
-				);
+				await legacyDb.tabMetadata.put(withVaultId(record, vaultId));
 				tabCount++;
 			}
 
 			for (const record of groupRecords) {
-				await legacyDb.groupMetadata.put(
-					withVaultId(record, vaultId)
-				);
+				await legacyDb.groupMetadata.put(withVaultId(record, vaultId));
 				groupCount++;
 			}
 		}
@@ -213,10 +173,7 @@ export async function migrateMetadataFromVaultDatabases(): Promise<void> {
 			`[Migration] Migrated ${tabCount} tab and ${groupCount} group metadata record(s) from ${vaultDbNames.length} vault database(s) to legacy IndexedDB`
 		);
 	} catch (error) {
-		console.error(
-			"[Migration] Failed to migrate metadata from per-vault IndexedDB:",
-			error
-		);
+		console.error("[Migration] Failed to migrate metadata from per-vault IndexedDB:", error);
 		throw error;
 	}
 }
@@ -224,14 +181,9 @@ export async function migrateMetadataFromVaultDatabases(): Promise<void> {
 export async function cleanupLegacyMetadataDatabase(): Promise<void> {
 	try {
 		await deleteDatabase(LEGACY_DB_NAME);
-		console.log(
-			`[Cleanup] Deleted legacy IndexedDB database "${LEGACY_DB_NAME}"`
-		);
+		console.log(`[Cleanup] Deleted legacy IndexedDB database "${LEGACY_DB_NAME}"`);
 	} catch (error) {
-		console.error(
-			"[Cleanup] Failed to delete legacy IndexedDB database:",
-			error
-		);
+		console.error("[Cleanup] Failed to delete legacy IndexedDB database:", error);
 		throw error;
 	}
 }
@@ -242,14 +194,9 @@ export async function cleanupVaultMetadataDatabases(): Promise<void> {
 		for (const dbName of vaultDbNames) {
 			await deleteDatabase(dbName);
 		}
-		console.log(
-			`[Cleanup] Deleted ${vaultDbNames.length} per-vault IndexedDB database(s)`
-		);
+		console.log(`[Cleanup] Deleted ${vaultDbNames.length} per-vault IndexedDB database(s)`);
 	} catch (error) {
-		console.error(
-			"[Cleanup] Failed to delete per-vault IndexedDB databases:",
-			error
-		);
+		console.error("[Cleanup] Failed to delete per-vault IndexedDB databases:", error);
 		throw error;
 	}
 }

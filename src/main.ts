@@ -1,13 +1,10 @@
 import { addIcon, Notice, Plugin } from "obsidian";
-import {
-	VTBetaHelperSettings,
-	VTBetaHelperSettingTab,
-	DEFAULT_SETTINGS,
-} from "./settings";
+import { VTBetaHelperSettings, VTBetaHelperSettingTab, DEFAULT_SETTINGS } from "./settings";
 import { validateToken, normalizeToken } from "./services/auth";
 import { install } from "./services/install";
 import { listBuilds } from "./services/list";
 import { errorToString as e } from "./common/utils";
+import { installLog, installLogError } from "./services/installLog";
 import { ReleaseNoteModal } from "./release_note";
 import { VERTICAL_TABS_BETA_HELPER_ICON } from "./icon";
 
@@ -25,10 +22,7 @@ export default class VTBetaHelper extends Plugin {
 		addIcon("vertical-tabs-beta-helper", VERTICAL_TABS_BETA_HELPER_ICON);
 		await this.loadSettings();
 		this.addSettingTab(new VTBetaHelperSettingTab(this.app, this));
-		this.registerObsidianProtocolHandler(
-			"vtbetahelper",
-			this.setupHandler.bind(this)
-		);
+		this.registerObsidianProtocolHandler("vtbetahelper", this.setupHandler.bind(this));
 		if (this.settings.token) this.startUpdateChecker();
 	}
 
@@ -39,11 +33,7 @@ export default class VTBetaHelper extends Plugin {
 	// Public - Settings
 
 	async loadSettings() {
-		this.settings = Object.assign(
-			{},
-			DEFAULT_SETTINGS,
-			await this.loadData()
-		);
+		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
 	}
 
 	async saveSettings() {
@@ -80,14 +70,10 @@ export default class VTBetaHelper extends Plugin {
 
 	startUpdateChecker() {
 		this.stopUpdateChecker();
-		if (!this.settings.autoUpdate && !this.settings.showUpdateNotification)
-			return;
+		if (!this.settings.autoUpdate && !this.settings.showUpdateNotification) return;
 		this.checkForUpdates();
 		this.updateCheckInterval = this.registerInterval(
-			window.setInterval(
-				() => this.checkForUpdates(),
-				this.settings.updateCheckInterval * HOUR
-			)
+			window.setInterval(() => this.checkForUpdates(), this.settings.updateCheckInterval * HOUR)
 		);
 	}
 
@@ -107,32 +93,36 @@ export default class VTBetaHelper extends Plugin {
 	private async checkForUpdates(): Promise<void> {
 		if (!this.settings.token) return;
 		try {
+			installLog("Checking for updates...");
 			const response = await listBuilds(this.settings.token, 1, 0);
-			if (!response.success || response.data.length === 0) return;
+			if (!response.success || response.data.length === 0) {
+				installLog("No builds returned from server.");
+				return;
+			}
 			const latestBuild = response.data[0];
 			const currentVersion = this.getCurrentVersion();
+			installLog(`Latest: ${latestBuild.tag}, installed: ${currentVersion ?? "(none)"}`);
 			if (latestBuild.tag !== currentVersion) {
 				if (this.settings.autoUpdate) {
-					if (!currentVersion) return;
+					if (!currentVersion) {
+						installLog("Auto-update skipped (Vertical Tabs not loaded).");
+						return;
+					}
+					installLog(`Auto-update: installing ${latestBuild.tag}...`);
 					await this.installVersion(latestBuild.tag);
-					if (
-						this.settings.showReleaseNotes &&
-						latestBuild.release_note
-					) {
+					if (this.settings.showReleaseNotes && latestBuild.release_note) {
 						new ReleaseNoteModal(this.app, latestBuild).open();
 					}
 				} else if (this.settings.showUpdateNotification) {
-					new Notice(
-						`Vertical Tabs ${latestBuild.tag} is now available. Check settings to update.`,
-						MESSAGE_INTERVAL
-					);
+					installLog(`Update available (${latestBuild.tag}); notification only.`);
+					new Notice(`Vertical Tabs ${latestBuild.tag} is now available. Check settings to update.`, MESSAGE_INTERVAL);
 				}
+			} else {
+				installLog("Already on latest build.");
 			}
 		} catch (error) {
-			new Notice(
-				"Unable to check for updates: " + e(error),
-				MESSAGE_INTERVAL
-			);
+			installLogError("Update check failed", error);
+			new Notice("Unable to check for updates: " + e(error), MESSAGE_INTERVAL);
 		}
 	}
 

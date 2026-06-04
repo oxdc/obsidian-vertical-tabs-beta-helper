@@ -47,9 +47,7 @@ export class SecurityWarningConfirmationModal extends Modal {
 			.setName("Confirmation")
 			.addText((text) => {
 				inputEl = text.inputEl;
-				text.setPlaceholder("Type the phrase above...").onChange(() =>
-					this.updateButtonState(inputEl, confirmButton)
-				);
+				text.setPlaceholder("Type the phrase above...").onChange(() => this.updateButtonState(inputEl, confirmButton));
 			});
 
 		const buttonDiv = contentEl.createDiv({
@@ -78,10 +76,7 @@ export class SecurityWarningConfirmationModal extends Modal {
 		setTimeout(() => inputEl?.focus(), 100);
 	}
 
-	private updateButtonState(
-		inputEl: HTMLInputElement,
-		confirmButton: HTMLButtonElement
-	) {
+	private updateButtonState(inputEl: HTMLInputElement, confirmButton: HTMLButtonElement) {
 		const isValid = inputEl.value === CONFIRMATION_PHRASE;
 		confirmButton.disabled = !isValid;
 	}

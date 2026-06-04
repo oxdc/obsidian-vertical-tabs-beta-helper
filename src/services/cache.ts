@@ -51,9 +51,7 @@ class Cache {
 		}
 	}
 
-	async fetchSubscription(
-		fetchFn: () => Promise<SubscriptionData>
-	): Promise<SubscriptionData> {
+	async fetchSubscription(fetchFn: () => Promise<SubscriptionData>): Promise<SubscriptionData> {
 		if (this.subscription && !this.isExpired(this.subscription.timestamp)) {
 			return this.subscription.data;
 		} else {

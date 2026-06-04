@@ -1,10 +1,4 @@
-import {
-	App,
-	Modal,
-	MarkdownRenderer,
-	Setting,
-	MarkdownRenderChild,
-} from "obsidian";
+import { App, Modal, MarkdownRenderer, Setting, MarkdownRenderChild } from "obsidian";
 import { BuildData } from "./services/response";
 
 export class ReleaseNoteModal extends Modal {

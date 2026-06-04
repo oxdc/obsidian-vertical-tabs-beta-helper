@@ -27,13 +27,10 @@ const ERROR_MESSAGES: Record<ApiError, string> = {
 	[ApiError.UnknownError]: "An unexpected error occurred. Please try again.",
 	[ApiError.Unauthorized]: "Your access token is invalid or has expired.",
 	[ApiError.NotFound]: "The requested build was not found.",
-	[ApiError.ServerError]:
-		"The server encountered an error. Please try again later.",
+	[ApiError.ServerError]: "The server encountered an error. Please try again later.",
 	[ApiError.BuildNotReady]: "The build is being prepared. Please wait %hint.",
-	[ApiError.RateLimited]:
-		"Too many requests. Please wait a moment and try again.",
-	[ApiError.HelperVersionTooOld]:
-		"Your Beta Helper plugin version is too old. Please upgrade to %required_version.",
+	[ApiError.RateLimited]: "Too many requests. Please wait a moment and try again.",
+	[ApiError.HelperVersionTooOld]: "Your Beta Helper plugin version is too old. Please upgrade to %required_version.",
 };
 
 function formatRetryTime(seconds: number | null): string {
@@ -41,10 +38,7 @@ function formatRetryTime(seconds: number | null): string {
 	return moment.duration(seconds, "seconds").humanize();
 }
 
-function getHeader(
-	headers: Record<string, string>,
-	name: string
-): string | undefined {
+function getHeader(headers: Record<string, string>, name: string): string | undefined {
 	const lowerName = name.toLowerCase();
 	for (const key in headers) {
 		if (key.toLowerCase() === lowerName) {
@@ -55,18 +49,13 @@ function getHeader(
 }
 
 export class ApiException extends Error {
-	constructor(
-		public readonly error: ApiError,
-		public readonly context: Record<string, unknown> = {}
-	) {
-		let message =
-			ERROR_MESSAGES[error] || ERROR_MESSAGES[ApiError.UnknownError];
+	constructor(public readonly error: ApiError, public readonly context: Record<string, unknown> = {}) {
+		let message = ERROR_MESSAGES[error] || ERROR_MESSAGES[ApiError.UnknownError];
 		if (error === ApiError.BuildNotReady) {
 			const hint = formatRetryTime(context.retry_after as number | null);
 			message = message.replace("%hint", hint);
 		} else if (error === ApiError.HelperVersionTooOld) {
-			const requiredVersion =
-				(context.required_version as string) || "the latest version";
+			const requiredVersion = (context.required_version as string) || "the latest version";
 			message = message.replace("%required_version", requiredVersion);
 		}
 		super(message);
@@ -83,10 +72,7 @@ export class ApiService {
 		this.token = token;
 	}
 
-	private async request(
-		endpoint: string,
-		options: Partial<RequestUrlParam> = {}
-	): Promise<RequestUrlResponse> {
+	private async request(endpoint: string, options: Partial<RequestUrlParam> = {}): Promise<RequestUrlResponse> {
 		const response = await requestUrl({
 			method: options.method || "GET",
 			url: `${this.baseURL}${endpoint}`,
@@ -117,10 +103,7 @@ export class ApiService {
 		}
 	}
 
-	async listBuilds(
-		limit: number,
-		offset: number
-	): Promise<ListBuildsResponse> {
+	async listBuilds(limit: number, offset: number): Promise<ListBuildsResponse> {
 		const pagination = `limit=${limit}&offset=${offset}`;
 		const response = await this.request(`/builds?${pagination}`);
 		switch (response.status) {
@@ -158,9 +141,7 @@ export class ApiService {
 	async downloadBuild(tag: string): Promise<DownloadBuildResult> {
 		// Add cache-busting parameter
 		const cacheBuster = `?_t=${Date.now()}`;
-		const response = await this.request(
-			`/builds/${tag}/download${cacheBuster}`
-		);
+		const response = await this.request(`/builds/${tag}/download${cacheBuster}`);
 
 		switch (response.status) {
 			case 200: {

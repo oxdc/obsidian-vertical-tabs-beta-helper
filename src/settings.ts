@@ -10,11 +10,7 @@ import {
 	TextComponent,
 } from "obsidian";
 import { SecurityWarningConfirmationModal } from "./warning";
-import {
-	normalizeToken,
-	refreshSubscription,
-	validateToken,
-} from "./services/auth";
+import { normalizeToken, refreshSubscription, validateToken } from "./services/auth";
 import { listBuilds } from "./services/list";
 import moment from "moment";
 import { errorToString as e } from "./common/utils";
@@ -145,10 +141,7 @@ export class VTBetaHelperSettingTab extends PluginSettingTab {
 			.setAttr("target", "_blank");
 	}
 
-	private displayTokenInput(
-		parentEl: HTMLElement | SettingGroup,
-		filled = false
-	) {
+	private displayTokenInput(parentEl: HTMLElement | SettingGroup, filled = false) {
 		let token = "";
 		let textEl: TextComponent | null;
 		let inputEl: HTMLInputElement | null;
@@ -184,7 +177,8 @@ export class VTBetaHelperSettingTab extends PluginSettingTab {
 				.setName("Access token")
 				.setClass("vt-beta-token")
 				.addText((text) => {
-					text.setPlaceholder("Enter your access token")
+					text
+						.setPlaceholder("Enter your access token")
 						.setValue(this.plugin.settings.token)
 						.onChange((value) => {
 							token = normalizeToken(value);
@@ -197,9 +191,7 @@ export class VTBetaHelperSettingTab extends PluginSettingTab {
 				.addButton((button) => {
 					button
 						.setButtonText(filled ? "Remove" : "Continue")
-						.onClick(async () =>
-							filled ? removeToken() : setToken()
-						);
+						.onClick(async () => (filled ? removeToken() : setToken()));
 					if (filled) button.setWarning();
 				});
 		});
@@ -300,18 +292,12 @@ export class VTBetaHelperSettingTab extends PluginSettingTab {
 		};
 		if (parentEl instanceof Setting) {
 			parentEl.addExtraButton(buildButton);
-		} else if (
-			requireApiVersion("1.11.0") &&
-			parentEl instanceof SettingGroup
-		) {
+		} else if (requireApiVersion("1.11.0") && parentEl instanceof SettingGroup) {
 			buildButton(new ExtraButtonComponent(parentEl.controlEl));
 		}
 	}
 
-	private async displayAvailableBuilds(
-		containerEl: HTMLElement,
-		group: Setting | SettingGroup
-	) {
+	private async displayAvailableBuilds(containerEl: HTMLElement, group: Setting | SettingGroup) {
 		const parentEl = group instanceof Setting ? containerEl : group.listEl;
 		const token = this.plugin.settings.token;
 		const buildsEl = parentEl.createDiv({ cls: "vt-beta-builds" });
@@ -323,19 +309,14 @@ export class VTBetaHelperSettingTab extends PluginSettingTab {
 		this.displayLoadingIndicator(buildsEl, "Loading builds...");
 
 		try {
-			const result = await cache.fetchBuilds(
-				token,
-				this.currentPage,
-				PAGE_SIZE,
-				async () => {
-					const offset = this.currentPage * PAGE_SIZE;
-					const response = await listBuilds(token, PAGE_SIZE, offset);
-					if (!response.success || response.data.length === 0) {
-						throw new Error("No builds available.");
-					}
-					return response;
+			const result = await cache.fetchBuilds(token, this.currentPage, PAGE_SIZE, async () => {
+				const offset = this.currentPage * PAGE_SIZE;
+				const response = await listBuilds(token, PAGE_SIZE, offset);
+				if (!response.success || response.data.length === 0) {
+					throw new Error("No builds available.");
 				}
-			);
+				return response;
+			});
 			buildsEl.empty();
 			this.displayBuildList(buildsEl, result);
 		} catch (error) {
@@ -406,10 +387,7 @@ export class VTBetaHelperSettingTab extends PluginSettingTab {
 							await this.plugin.saveSettings();
 							this.plugin.stopUpdateChecker();
 						}
-						if (
-							this.plugin.settings.showReleaseNotes &&
-							build.release_note
-						) {
+						if (this.plugin.settings.showReleaseNotes && build.release_note) {
 							new ReleaseNoteModal(this.app, build).open();
 						}
 						this.display();
@@ -420,20 +398,14 @@ export class VTBetaHelperSettingTab extends PluginSettingTab {
 						installBtnEl.toggleClass("mod-loading", false);
 					}
 				};
-				button
-					.setIcon("download")
-					.setTooltip("Install")
-					.setDisabled(isCurrent)
-					.onClick(installBtnClick);
+				button.setIcon("download").setTooltip("Install").setDisabled(isCurrent).onClick(installBtnClick);
 			});
 		}
 
 		const totalPages = Math.ceil(total / PAGE_SIZE);
 		if (totalPages <= 1) return;
 
-		const paginationEl = new Setting(parentEl)
-			.setNoInfo()
-			.setClass("pagination");
+		const paginationEl = new Setting(parentEl).setNoInfo().setClass("pagination");
 		paginationEl.addExtraButton((button) => {
 			button
 				.setIcon("chevrons-left")
@@ -489,25 +461,18 @@ export class VTBetaHelperSettingTab extends PluginSettingTab {
 		this.createSetting(container, (setting) => {
 			setting
 				.setName("Auto update")
-				.setDesc(
-					"Whether to automatically check and update Vertical Tabs."
-				)
+				.setDesc("Whether to automatically check and update Vertical Tabs.")
 				.addToggle((toggle) =>
-					toggle
-						.setValue(this.plugin.settings.autoUpdate)
-						.onChange(async (value) => {
-							this.plugin.settings.autoUpdate = value;
-							await this.plugin.saveSettings();
-							if (
-								this.plugin.settings.autoUpdate ||
-								this.plugin.settings.showUpdateNotification
-							) {
-								this.plugin.startUpdateChecker();
-							} else {
-								this.plugin.stopUpdateChecker();
-							}
-							this.display();
-						})
+					toggle.setValue(this.plugin.settings.autoUpdate).onChange(async (value) => {
+						this.plugin.settings.autoUpdate = value;
+						await this.plugin.saveSettings();
+						if (this.plugin.settings.autoUpdate || this.plugin.settings.showUpdateNotification) {
+							this.plugin.startUpdateChecker();
+						} else {
+							this.plugin.stopUpdateChecker();
+						}
+						this.display();
+					})
 				);
 		});
 
@@ -515,25 +480,18 @@ export class VTBetaHelperSettingTab extends PluginSettingTab {
 			this.createSetting(container, (setting) => {
 				setting
 					.setName("Show update notification")
-					.setDesc(
-						"Whether to show a notification when a new version is available."
-					)
+					.setDesc("Whether to show a notification when a new version is available.")
 					.addToggle((toggle) =>
-						toggle
-							.setValue(
-								this.plugin.settings.showUpdateNotification
-							)
-							.onChange(async (value) => {
-								this.plugin.settings.showUpdateNotification =
-									value;
-								await this.plugin.saveSettings();
-								if (value) {
-									this.plugin.startUpdateChecker();
-								} else {
-									this.plugin.stopUpdateChecker();
-								}
-								this.display();
-							})
+						toggle.setValue(this.plugin.settings.showUpdateNotification).onChange(async (value) => {
+							this.plugin.settings.showUpdateNotification = value;
+							await this.plugin.saveSettings();
+							if (value) {
+								this.plugin.startUpdateChecker();
+							} else {
+								this.plugin.stopUpdateChecker();
+							}
+							this.display();
+						})
 					);
 			});
 		}
@@ -541,16 +499,12 @@ export class VTBetaHelperSettingTab extends PluginSettingTab {
 		this.createSetting(container, (setting) => {
 			setting
 				.setName("Show release notes")
-				.setDesc(
-					"Whether to show what's new in the latest beta version."
-				)
+				.setDesc("Whether to show what's new in the latest beta version.")
 				.addToggle((toggle) =>
-					toggle
-						.setValue(this.plugin.settings.showReleaseNotes)
-						.onChange(async (value) => {
-							this.plugin.settings.showReleaseNotes = value;
-							await this.plugin.saveSettings();
-						})
+					toggle.setValue(this.plugin.settings.showReleaseNotes).onChange(async (value) => {
+						this.plugin.settings.showReleaseNotes = value;
+						await this.plugin.saveSettings();
+					})
 				);
 		});
 
@@ -565,10 +519,7 @@ export class VTBetaHelperSettingTab extends PluginSettingTab {
 
 		if (!this.showAdvancedOptions) return;
 
-		if (
-			this.plugin.settings.autoUpdate ||
-			this.plugin.settings.showUpdateNotification
-		) {
+		if (this.plugin.settings.autoUpdate || this.plugin.settings.showUpdateNotification) {
 			this.createSetting(container, (setting) => {
 				setting
 					.setName("Update check interval")
@@ -580,12 +531,9 @@ export class VTBetaHelperSettingTab extends PluginSettingTab {
 							.addOption("24", "1 day")
 							.addOption("48", "2 days")
 							.addOption("168", "1 week")
-							.setValue(
-								this.plugin.settings.updateCheckInterval.toString()
-							)
+							.setValue(this.plugin.settings.updateCheckInterval.toString())
 							.onChange(async (value) => {
-								this.plugin.settings.updateCheckInterval =
-									parseInt(value);
+								this.plugin.settings.updateCheckInterval = parseInt(value);
 								await this.plugin.saveSettings();
 								this.plugin.startUpdateChecker();
 							});
@@ -598,27 +546,25 @@ export class VTBetaHelperSettingTab extends PluginSettingTab {
 				.setName("Hide security warnings")
 				.setDesc("Disable beta version integrity check.")
 				.addToggle((toggle) =>
-					toggle
-						.setValue(this.plugin.settings.hideSecurityInfo)
-						.onChange(async (value) => {
-							const updateAndSave = async () => {
-								this.plugin.settings.hideSecurityInfo = value;
-								await this.plugin.saveSettings();
-								this.display();
-							};
+					toggle.setValue(this.plugin.settings.hideSecurityInfo).onChange(async (value) => {
+						const updateAndSave = async () => {
+							this.plugin.settings.hideSecurityInfo = value;
+							await this.plugin.saveSettings();
+							this.display();
+						};
 
-							if (value) {
-								// To enable, show confirmation modal
-								new SecurityWarningConfirmationModal(this.app, {
-									onConfirm: () => updateAndSave(),
-									onCancel: () => toggle.setValue(false),
-								}).open();
-							} else {
-								// To disable, no confirmation needed
-								await updateAndSave();
-								return;
-							}
-						})
+						if (value) {
+							// To enable, show confirmation modal
+							new SecurityWarningConfirmationModal(this.app, {
+								onConfirm: () => updateAndSave(),
+								onCancel: () => toggle.setValue(false),
+							}).open();
+						} else {
+							// To disable, no confirmation needed
+							await updateAndSave();
+							return;
+						}
+					})
 				);
 		});
 	}
@@ -632,18 +578,12 @@ export class VTBetaHelperSettingTab extends PluginSettingTab {
 		this.displaySubscriptionStatus(container);
 	}
 
-	private async displaySubscriptionStatus(
-		container: HTMLElement | SettingGroup
-	) {
-		const containerEl =
-			container instanceof HTMLElement ? container : container.listEl;
+	private async displaySubscriptionStatus(container: HTMLElement | SettingGroup) {
+		const containerEl = container instanceof HTMLElement ? container : container.listEl;
 		const subscriptionEl = containerEl.createDiv({ cls: "setting-item" });
 		const token = this.plugin.settings.token;
 
-		this.displayLoadingIndicator(
-			subscriptionEl,
-			"Fetching subscription status..."
-		);
+		this.displayLoadingIndicator(subscriptionEl, "Fetching subscription status...");
 
 		try {
 			const subscription = await cache.fetchSubscription(async () => {
@@ -666,10 +606,7 @@ export class VTBetaHelperSettingTab extends PluginSettingTab {
 		}
 	}
 
-	private renderSubscriptionInfo(
-		parentEl: HTMLElement,
-		subscription: SubscriptionData
-	) {
+	private renderSubscriptionInfo(parentEl: HTMLElement, subscription: SubscriptionData) {
 		const statusEl = parentEl.createDiv({ cls: "vt-beta-subscription" });
 		const { email, expires_at, valid } = subscription;
 		const expiryDate = moment(expires_at);

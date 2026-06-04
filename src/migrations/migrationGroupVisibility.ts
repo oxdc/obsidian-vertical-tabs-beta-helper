@@ -62,16 +62,10 @@ export async function migrateGroupVisibilityToIndexDB(): Promise<void> {
 		const collapsedGroups = loadCollapsedGroups();
 		const unhideTimes = loadGroupUnhideTimes();
 
-		const ids = new Set<string>([
-			...hiddenGroups,
-			...collapsedGroups,
-			...unhideTimes.keys(),
-		]);
+		const ids = new Set<string>([...hiddenGroups, ...collapsedGroups, ...unhideTimes.keys()]);
 
 		if (ids.size === 0) {
-			console.log(
-				"[Migration] No group visibility data found in localStorage"
-			);
+			console.log("[Migration] No group visibility data found in localStorage");
 			return;
 		}
 
@@ -95,14 +89,9 @@ export async function migrateGroupVisibilityToIndexDB(): Promise<void> {
 			migrated++;
 		}
 
-		console.log(
-			`[Migration] Migrated visibility state for ${migrated} group(s) to IndexedDB`
-		);
+		console.log(`[Migration] Migrated visibility state for ${migrated} group(s) to IndexedDB`);
 	} catch (error) {
-		console.error(
-			"[Migration] Failed to migrate group visibility to IndexedDB:",
-			error
-		);
+		console.error("[Migration] Failed to migrate group visibility to IndexedDB:", error);
 		throw error;
 	}
 }
@@ -130,35 +119,20 @@ export async function migrateGroupVisibilityFromIndexDB(): Promise<void> {
 			}
 		}
 
-		if (
-			hiddenGroups.length === 0 &&
-			collapsedGroups.length === 0 &&
-			unhideEntries.length === 0
-		) {
-			console.log(
-				"[Migration] No group visibility data found in IndexedDB"
-			);
+		if (hiddenGroups.length === 0 && collapsedGroups.length === 0 && unhideEntries.length === 0) {
+			console.log("[Migration] No group visibility data found in IndexedDB");
 			return;
 		}
 
 		localStorage.setItem("hidden-groups", JSON.stringify(hiddenGroups));
-		localStorage.setItem(
-			"collapsed-groups",
-			JSON.stringify(collapsedGroups)
-		);
-		localStorage.setItem(
-			"group-unhide-times",
-			JSON.stringify(unhideEntries)
-		);
+		localStorage.setItem("collapsed-groups", JSON.stringify(collapsedGroups));
+		localStorage.setItem("group-unhide-times", JSON.stringify(unhideEntries));
 
 		console.log(
 			`[Migration] Migrated ${hiddenGroups.length} hidden, ${collapsedGroups.length} collapsed, and ${unhideEntries.length} unhide time(s) to localStorage`
 		);
 	} catch (error) {
-		console.error(
-			"[Migration] Failed to migrate group visibility from IndexedDB:",
-			error
-		);
+		console.error("[Migration] Failed to migrate group visibility from IndexedDB:", error);
 		throw error;
 	}
 }
@@ -171,14 +145,9 @@ export function cleanupGroupVisibilityLocalStorage(): void {
 		localStorage.removeItem("hidden-groups");
 		localStorage.removeItem("collapsed-groups");
 		localStorage.removeItem("group-unhide-times");
-		console.log(
-			"[Cleanup] Removed hidden-groups, collapsed-groups, and group-unhide-times from localStorage"
-		);
+		console.log("[Cleanup] Removed hidden-groups, collapsed-groups, and group-unhide-times from localStorage");
 	} catch (error) {
-		console.error(
-			"[Cleanup] Failed to cleanup group visibility from localStorage:",
-			error
-		);
+		console.error("[Cleanup] Failed to cleanup group visibility from localStorage:", error);
 		throw error;
 	}
 }
@@ -192,11 +161,7 @@ export async function cleanupGroupVisibilityFromIndexDB(): Promise<void> {
 		let cleaned = 0;
 
 		for (const metadata of allMetadata) {
-			if (
-				!metadata.isHidden &&
-				!metadata.isCollapsed &&
-				metadata.unhideTime === undefined
-			) {
+			if (!metadata.isHidden && !metadata.isCollapsed && metadata.unhideTime === undefined) {
 				continue;
 			}
 
@@ -208,14 +173,9 @@ export async function cleanupGroupVisibilityFromIndexDB(): Promise<void> {
 			cleaned++;
 		}
 
-		console.log(
-			`[Cleanup] Removed visibility fields from ${cleaned} group metadata record(s) in IndexedDB`
-		);
+		console.log(`[Cleanup] Removed visibility fields from ${cleaned} group metadata record(s) in IndexedDB`);
 	} catch (error) {
-		console.error(
-			"[Cleanup] Failed to cleanup group visibility from IndexedDB:",
-			error
-		);
+		console.error("[Cleanup] Failed to cleanup group visibility from IndexedDB:", error);
 		throw error;
 	}
 }

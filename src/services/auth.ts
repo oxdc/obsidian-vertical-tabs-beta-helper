@@ -1,16 +1,8 @@
 import { ApiError, ApiException, ApiService } from "./api";
-import {
-	stripTokenDashes,
-	retryWithBackoff,
-	RetryConfig,
-} from "../common/utils";
+import { stripTokenDashes, retryWithBackoff, RetryConfig } from "../common/utils";
 import { GetSubscriptionResponse } from "./response";
 
-const RETRYABLE_ERRORS = [
-	ApiError.ServerError,
-	ApiError.UnknownError,
-	ApiError.RateLimited,
-];
+const RETRYABLE_ERRORS = [ApiError.ServerError, ApiError.UnknownError, ApiError.RateLimited];
 
 export interface ValidateTokenResponse {
 	isValid: boolean;
@@ -28,9 +20,7 @@ enum Messages {
 	RateLimited = "Too many requests. Please wait a moment and try again.",
 }
 
-export async function validateToken(
-	token: string
-): Promise<ValidateTokenResponse> {
+export async function validateToken(token: string): Promise<ValidateTokenResponse> {
 	const normalizedToken = normalizeToken(token);
 	if (normalizedToken.length !== 16) {
 		return { isValid: false, errorMessage: Messages.InvalidToken };
@@ -40,9 +30,7 @@ export async function validateToken(
 		maxRetries: 5,
 		initialDelay: 500,
 		shouldRetry: (error) => ({
-			retry:
-				error instanceof ApiException &&
-				RETRYABLE_ERRORS.includes(error.error),
+			retry: error instanceof ApiException && RETRYABLE_ERRORS.includes(error.error),
 		}),
 	};
 
@@ -76,9 +64,7 @@ export async function validateToken(
 	}
 }
 
-export async function refreshSubscription(
-	token: string
-): Promise<GetSubscriptionResponse> {
+export async function refreshSubscription(token: string): Promise<GetSubscriptionResponse> {
 	const normalizedToken = normalizeToken(token);
 	const apiService = new ApiService(normalizedToken);
 
@@ -86,14 +72,9 @@ export async function refreshSubscription(
 		maxRetries: 10,
 		initialDelay: 1000,
 		shouldRetry: (error) => ({
-			retry:
-				error instanceof ApiException &&
-				RETRYABLE_ERRORS.includes(error.error),
+			retry: error instanceof ApiException && RETRYABLE_ERRORS.includes(error.error),
 		}),
 	};
 
-	return await retryWithBackoff(
-		async () => await apiService.getSubscription(),
-		retryConfig
-	);
+	return await retryWithBackoff(async () => await apiService.getSubscription(), retryConfig);
 }

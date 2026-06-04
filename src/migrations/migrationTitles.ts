@@ -82,9 +82,7 @@ export async function migrateGroupTitlesToIndexDB(): Promise<void> {
 				`[Migration] Migrated ${groupsToMigrate.length} group titles to IndexedDB from ${viewStateKeys.length} key(s)`
 			);
 		} else {
-			console.log(
-				"[Migration] No custom group titles to migrate (all were default)"
-			);
+			console.log("[Migration] No custom group titles to migrate (all were default)");
 		}
 	} catch (error) {
 		console.error("[Migration] Failed to migrate group titles:", error);
@@ -120,9 +118,7 @@ export async function migrateGroupTitlesFromIndexDB(): Promise<void> {
 		if (entries.length > 0) {
 			const viewStateKeys = findViewStateKeys();
 			if (viewStateKeys.length === 0) {
-				console.log(
-					"[Migration] No view-state keys found in localStorage to restore to"
-				);
+				console.log("[Migration] No view-state keys found in localStorage to restore to");
 			} else {
 				const data = JSON.stringify(entries);
 				for (const key of viewStateKeys) {
@@ -136,10 +132,7 @@ export async function migrateGroupTitlesFromIndexDB(): Promise<void> {
 			console.log("[Migration] No custom titles found in IndexedDB");
 		}
 	} catch (error) {
-		console.error(
-			"[Migration] Failed to migrate group titles from IndexedDB:",
-			error
-		);
+		console.error("[Migration] Failed to migrate group titles from IndexedDB:", error);
 		throw error;
 	}
 }
@@ -155,14 +148,9 @@ export function cleanupGroupTitlesLocalStorage(): void {
 		for (const key of viewStateKeys) {
 			localStorage.removeItem(key);
 		}
-		console.log(
-			`[Cleanup] Removed ${viewStateKeys.length} view-state key(s) from localStorage`
-		);
+		console.log(`[Cleanup] Removed ${viewStateKeys.length} view-state key(s) from localStorage`);
 	} catch (error) {
-		console.error(
-			"[Cleanup] Failed to cleanup group titles from localStorage:",
-			error
-		);
+		console.error("[Cleanup] Failed to cleanup group titles from localStorage:", error);
 		throw error;
 	}
 }
@@ -183,19 +171,13 @@ export async function cleanupIndexDB(): Promise<void> {
 		};
 
 		request.onerror = () => {
-			const error = new Error(
-				`Failed to delete IndexedDB: ${
-					request.error?.message || "Unknown error"
-				}`
-			);
+			const error = new Error(`Failed to delete IndexedDB: ${request.error?.message || "Unknown error"}`);
 			console.error("[Cleanup] Failed to delete IndexedDB:", error);
 			reject(error);
 		};
 
 		request.onblocked = () => {
-			const error = new Error(
-				"Failed to delete IndexedDB: database is blocked by open connections"
-			);
+			const error = new Error("Failed to delete IndexedDB: database is blocked by open connections");
 			console.error("[Cleanup] Failed to delete IndexedDB:", error);
 			reject(error);
 		};

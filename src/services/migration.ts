@@ -8,7 +8,7 @@ type MigrationQualifier = {
 
 type Migration = {
 	qualifier: MigrationQualifier;
-	order?: number;  // Lower runs first on upgrade; higher runs first on downgrade.
+	order?: number; // Lower runs first on upgrade; higher runs first on downgrade.
 	preInstallationTasks: (app: App) => Promise<void>;
 	postInstallationTasks: (app: App) => Promise<void>;
 };
@@ -38,10 +38,7 @@ class MigrationRegistry {
 		}
 	}
 
-	async queryMigrations(
-		fromVersion: string,
-		toVersion: string
-	): Promise<Migration[]> {
+	async queryMigrations(fromVersion: string, toVersion: string): Promise<Migration[]> {
 		await this.ensureMigrationsLoaded();
 		const realFromVersion = fromVersion.replace(/-beta-\d+$/, "");
 		const realToVersion = toVersion.replace(/-beta-\d+$/, "");
@@ -54,18 +51,10 @@ class MigrationRegistry {
 
 			if (isUpgrade) {
 				// For upgrades: find migrations that bridge from old to new version
-				return (
-					migrationIsUpgrade &&
-					semver.lte(realFromVersion, mFrom) &&
-					semver.gte(realToVersion, mTo)
-				);
+				return migrationIsUpgrade && semver.lte(realFromVersion, mFrom) && semver.gte(realToVersion, mTo);
 			} else {
 				// For downgrades: find migrations that bridge from new to old version
-				return (
-					!migrationIsUpgrade &&
-					semver.gte(realFromVersion, mFrom) &&
-					semver.lte(realToVersion, mTo)
-				);
+				return !migrationIsUpgrade && semver.gte(realFromVersion, mFrom) && semver.lte(realToVersion, mTo);
 			}
 		});
 
