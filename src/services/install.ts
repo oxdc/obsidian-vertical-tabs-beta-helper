@@ -144,17 +144,28 @@ async function verifyAndInstall(
 	}
 }
 
-export async function reloadPlugin(app: App): Promise<void> {
+async function unloadPlugin(app: App): Promise<void> {
 	try {
 		if (app.plugins.getPlugin(VERTICAL_TABS_ID)) {
 			await app.plugins.disablePlugin(VERTICAL_TABS_ID);
 		}
-		const root = app.plugins.getPluginFolder();
-		const targetDir = normalizePath(`${root}/${VERTICAL_TABS_ID}`);
+	} catch (error) {
+		throw new InstallException(`Failed to unload the plugin: ${e(error)}`);
+	}
+}
+
+async function loadPlugin(app: App): Promise<void> {
+	const root = app.plugins.getPluginFolder();
+	const targetDir = normalizePath(`${root}/${VERTICAL_TABS_ID}`);
+	if (!(await app.vault.adapter.exists(targetDir))) {
+		console.log("Plugin directory not found.");
+		return;
+	}
+	try {
 		await app.plugins.loadManifest(targetDir);
 		await app.plugins.enablePluginAndSave(VERTICAL_TABS_ID);
 	} catch (error) {
-		throw new InstallException(`Failed to reload the plugin: ${e(error)}`);
+		throw new InstallException(`Failed to load the plugin: ${e(error)}`);
 	}
 }
 
@@ -167,8 +178,12 @@ export async function install(
 ): Promise<void> {
 	const apiService = new ApiService(token);
 	const result = await downloadBuild(apiService, tag, manual);
-	if (current) await runPreinstallationTasks(app, current, tag);
-	await verifyAndInstall(app, result);
-	if (current) await runPostinstallationTasks(app, current, tag);
-	await reloadPlugin(app);
+	await unloadPlugin(app);
+	try {
+		if (current) await runPreinstallationTasks(app, current, tag);
+		await verifyAndInstall(app, result);
+		if (current) await runPostinstallationTasks(app, current, tag);
+	} finally {
+		await loadPlugin(app);
+	}
 }
