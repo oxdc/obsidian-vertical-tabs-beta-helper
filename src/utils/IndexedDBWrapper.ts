@@ -9,17 +9,53 @@ function openDatabase(
 			reject(request.error?.message || "Unknown error");
 		};
 
-		request.onsuccess = () => {
-			resolve(request.result);
-		};
-
 		request.onupgradeneeded = (event) => {
+			// Fires only when creating a brand-new database (version 0 → 1).
 			const db = (event.target as IDBOpenDBRequest).result;
 			for (const storeName of storeNames) {
 				if (!db.objectStoreNames.contains(storeName)) {
 					db.createObjectStore(storeName, { keyPath: "id" });
 				}
 			}
+		};
+
+		request.onsuccess = () => {
+			const db = request.result;
+			const missing = storeNames.filter((s) => !db.objectStoreNames.contains(s));
+
+			if (missing.length === 0) {
+				resolve(db);
+				return;
+			}
+
+			// The database exists but is missing stores added in a later schema version
+			// (onupgradeneeded does not fire when opening without a version on an existing
+			// database). Close and reopen at currentVersion + 1 to trigger the upgrade path.
+			const nextVersion = db.version + 1;
+			db.close();
+
+			const upgrade = indexedDB.open(dbName, nextVersion);
+
+			upgrade.onerror = () => {
+				reject(upgrade.error?.message || "Unknown error");
+			};
+
+			upgrade.onblocked = () => {
+				reject(new Error(`Cannot add missing stores to "${dbName}": blocked by another connection`));
+			};
+
+			upgrade.onupgradeneeded = (event) => {
+				const upgradedDb = (event.target as IDBOpenDBRequest).result;
+				for (const storeName of missing) {
+					if (!upgradedDb.objectStoreNames.contains(storeName)) {
+						upgradedDb.createObjectStore(storeName, { keyPath: "id" });
+					}
+				}
+			};
+
+			upgrade.onsuccess = () => {
+				resolve(upgrade.result);
+			};
 		};
 	});
 }
