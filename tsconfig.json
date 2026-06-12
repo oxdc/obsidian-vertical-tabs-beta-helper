@@ -4,17 +4,19 @@
 		"inlineSourceMap": true,
 		"inlineSources": true,
 		"module": "ESNext",
-		"target": "ES6",
-		"allowJs": true,
-		"noImplicitAny": true,
+		"target": "ES2021",
+		"strict": true,
+		"noImplicitReturns": true,
+		"noFallthroughCasesInSwitch": true,
+		"noUncheckedIndexedAccess": true,
 		"moduleResolution": "node",
-		"importHelpers": true,
 		"isolatedModules": true,
-		"strictNullChecks": true,
-		"lib": ["DOM", "ES2018"],
+		"skipLibCheck": true,
+		"forceConsistentCasingInFileNames": true,
+		"allowSyntheticDefaultImports": true,
+		"lib": ["DOM", "ES2021"],
 		"types": ["obsidian-typings", "node"],
-		"esModuleInterop": true,
-		"allowSyntheticDefaultImports": true
+		"sourceRoot": "/src"
 	},
 	"include": ["**/*.ts"]
 }
