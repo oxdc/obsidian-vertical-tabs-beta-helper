@@ -100,14 +100,14 @@ export class VTBetaHelperSettingTab extends PluginSettingTab {
 		docEl
 			.createEl("a", {
 				href: "https://vertical-tabs-docs.oxdc.dev/Beta-Versions/terms",
-				text: "Terms of Service",
+				text: "Terms of service",
 			})
 			.setAttr("target", "_blank");
 		docEl.appendText(" · ");
 		docEl
 			.createEl("a", {
 				href: "https://vertical-tabs-docs.oxdc.dev/Beta-Versions/security",
-				text: "Privacy Policy",
+				text: "Privacy policy",
 			})
 			.setAttr("target", "_blank");
 		docEl.appendText(" · ");
@@ -166,7 +166,7 @@ export class VTBetaHelperSettingTab extends PluginSettingTab {
 					inputEl.setCustomValidity(errorMessage);
 					inputEl.reportValidity();
 				} else {
-					new Notice(errorMessage);
+					new Notice(errorMessage, 0);
 				}
 			}
 		};
@@ -267,7 +267,7 @@ export class VTBetaHelperSettingTab extends PluginSettingTab {
 		const group = this.createSettingGroup(parentEl, "Available builds");
 		this.addCssClass(group, "vt-beta-builds-title");
 		this.displayRefreshButton(group);
-		this.displayAvailableBuilds(parentEl, group);
+		void this.displayAvailableBuilds(parentEl, group);
 	}
 
 	private addCssClass(group: Setting | SettingGroup, className: string) {
@@ -358,10 +358,10 @@ export class VTBetaHelperSettingTab extends PluginSettingTab {
 			buildEl.settingEl.toggleClass("mod-current", isCurrent);
 			buildEl.settingEl.toggleClass("mod-latest", build.latest);
 			if (build.latest) {
-				buildEl.nameEl.createEl("a", { cls: "tag", text: "latest" });
+				buildEl.nameEl.createEl("a", { cls: "tag", text: "Latest" });
 			}
 			if (isCurrent) {
-				buildEl.nameEl.createEl("a", { cls: "tag", text: "installed" });
+				buildEl.nameEl.createEl("a", { cls: "tag", text: "Installed" });
 			}
 			buildEl.addExtraButton((button) => {
 				button
@@ -390,7 +390,7 @@ export class VTBetaHelperSettingTab extends PluginSettingTab {
 							new ReleaseNoteModal(this.app, build).open();
 						}
 						this.display();
-					} catch (error) {
+					} catch {
 						button.setIcon("download");
 						button.setDisabled(false);
 						button.setTooltip("Install");
@@ -525,11 +525,11 @@ export class VTBetaHelperSettingTab extends PluginSettingTab {
 					.setDesc("Set how often to check for updates.")
 					.addDropdown((dropdown) => {
 						dropdown
-							.addOption("1", "1 hour")
-							.addOption("12", "12 hours")
-							.addOption("24", "1 day")
-							.addOption("48", "2 days")
-							.addOption("168", "1 week")
+							.addOption("1", "1 Hour")
+							.addOption("12", "12 Hours")
+							.addOption("24", "1 Day")
+							.addOption("48", "2 Days")
+							.addOption("168", "1 Week")
 							.setValue(this.plugin.settings.updateCheckInterval.toString())
 							.onChange(async (value) => {
 								this.plugin.settings.updateCheckInterval = parseInt(value);
@@ -555,8 +555,12 @@ export class VTBetaHelperSettingTab extends PluginSettingTab {
 						if (value) {
 							// To enable, show confirmation modal
 							new SecurityWarningConfirmationModal(this.app, {
-								onConfirm: () => updateAndSave(),
-								onCancel: () => toggle.setValue(false),
+								onConfirm: () => {
+									void updateAndSave();
+								},
+								onCancel: () => {
+									toggle.setValue(false);
+								},
 							}).open();
 						} else {
 							// To disable, no confirmation needed
@@ -574,7 +578,7 @@ export class VTBetaHelperSettingTab extends PluginSettingTab {
 		const group = this.createSettingGroup(parentEl, "License");
 		const container = group instanceof Setting ? parentEl : group;
 		this.displayTokenInput(container, true);
-		this.displaySubscriptionStatus(container);
+		void this.displaySubscriptionStatus(container);
 	}
 
 	private async displaySubscriptionStatus(container: HTMLElement | SettingGroup) {

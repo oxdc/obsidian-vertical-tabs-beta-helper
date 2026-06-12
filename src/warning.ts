@@ -21,7 +21,7 @@ export class SecurityWarningConfirmationModal extends Modal {
 	onOpen() {
 		const { contentEl } = this;
 		contentEl.empty();
-		contentEl.createEl("h2", { text: "Security Warning" });
+		contentEl.createEl("h2", { text: "Security warning" });
 		const warningDiv = contentEl.createDiv({
 			cls: "vt-beta-security-warning",
 		});
@@ -61,7 +61,7 @@ export class SecurityWarningConfirmationModal extends Modal {
 		};
 
 		const confirmButton = buttonDiv.createEl("button", {
-			text: "Disable Security Warnings",
+			text: "Disable security warnings",
 			cls: "mod-warning",
 		});
 		confirmButton.disabled = true;

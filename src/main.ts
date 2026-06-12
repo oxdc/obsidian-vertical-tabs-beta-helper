@@ -13,7 +13,7 @@ const VERTICAL_TABS_ID = "vertical-tabs";
 const HOUR = 1000 * 60 * 60;
 
 export default class VTBetaHelper extends Plugin {
-	settings: VTBetaHelperSettings;
+	settings!: VTBetaHelperSettings;
 	private updateCheckInterval: number | null = null;
 
 	// Public - Lifecycle Methods
@@ -33,7 +33,7 @@ export default class VTBetaHelper extends Plugin {
 	// Public - Settings
 
 	async loadSettings() {
-		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+		this.settings = Object.assign({}, DEFAULT_SETTINGS, (await this.loadData()) as VTBetaHelperSettings);
 	}
 
 	async saveSettings() {
@@ -71,9 +71,11 @@ export default class VTBetaHelper extends Plugin {
 	startUpdateChecker() {
 		this.stopUpdateChecker();
 		if (!this.settings.autoUpdate && !this.settings.showUpdateNotification) return;
-		this.checkForUpdates();
+		void this.checkForUpdates();
 		this.updateCheckInterval = this.registerInterval(
-			window.setInterval(() => this.checkForUpdates(), this.settings.updateCheckInterval * HOUR)
+			window.setInterval(() => {
+				void this.checkForUpdates();
+			}, this.settings.updateCheckInterval * HOUR)
 		);
 	}
 
@@ -100,6 +102,10 @@ export default class VTBetaHelper extends Plugin {
 				return;
 			}
 			const latestBuild = response.data[0];
+			if (!latestBuild) {
+				installLog("No valid build found.");
+				return;
+			}
 			const currentVersion = this.getCurrentVersion();
 			installLog(`Latest: ${latestBuild.tag}, installed: ${currentVersion ?? "(none)"}`);
 			if (latestBuild.tag !== currentVersion) {
@@ -134,7 +140,7 @@ export default class VTBetaHelper extends Plugin {
 			await install(this.app, current, tag, this.settings.token, manual);
 			new Notice(`Vertical Tabs ${tag} installed.`, MESSAGE_INTERVAL);
 		} catch (error) {
-			new Notice("Installation failed: " + e(error), MESSAGE_INTERVAL);
+			new Notice("Installation failed: " + e(error), 0);
 			throw error;
 		}
 	}

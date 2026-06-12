@@ -22,7 +22,7 @@ export class ReleaseNoteModal extends Modal {
 			cls: "vt-beta-release-note markdown-rendered markdown-preview-view",
 		});
 		const child = new MarkdownRenderChild(containerEl);
-		MarkdownRenderer.render(this.app, releaseNote, containerEl, "", child);
+		void MarkdownRenderer.render(this.app, releaseNote, containerEl, "", child);
 		new Setting(contentEl).addButton((button) => {
 			button.setButtonText("Close").onClick(() => this.close());
 		});

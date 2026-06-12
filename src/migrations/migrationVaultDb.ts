@@ -4,9 +4,7 @@ import { Database, Table } from "src/utils/IndexedDBWrapper";
 
 const LEGACY_DB_NAME = "VerticalTabsMetadata";
 const VAULT_DB_PREFIX = "VerticalTabsMetadata-";
-const STORE_NAMES = ["tabMetadata", "groupMetadata"] as const;
-
-type MetadataStoreName = (typeof STORE_NAMES)[number];
+type MetadataStoreName = "tabMetadata" | "groupMetadata";
 
 interface MetadataRecord {
 	id: string;

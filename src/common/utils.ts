@@ -43,7 +43,7 @@ export type RetryDecision = {
 	delay?: number;
 };
 
-export type RetryDecider = (error: Error, attempt: number) => RetryDecision;
+export type RetryDecider = (error: unknown, attempt: number) => RetryDecision;
 
 const UNKNOWN_ERROR = new Error("Unknown error");
 

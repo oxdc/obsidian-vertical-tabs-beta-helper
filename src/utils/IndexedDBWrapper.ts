@@ -1,3 +1,7 @@
+function toDbError(error: DOMException | null, fallback = "Unknown error"): Error {
+	return new Error(error?.message ?? fallback);
+}
+
 function openDatabase(
 	dbName: string,
 	storeNames: string[]
@@ -6,7 +10,7 @@ function openDatabase(
 		const request = indexedDB.open(dbName);
 
 		request.onerror = () => {
-			reject(request.error?.message || "Unknown error");
+			reject(toDbError(request.error));
 		};
 
 		request.onupgradeneeded = (event) => {
@@ -37,7 +41,7 @@ function openDatabase(
 			const upgrade = indexedDB.open(dbName, nextVersion);
 
 			upgrade.onerror = () => {
-				reject(upgrade.error?.message || "Unknown error");
+				reject(toDbError(upgrade.error));
 			};
 
 			upgrade.onblocked = () => {
@@ -75,13 +79,14 @@ export class Table<T extends { id: string }> {
 			const request = store.get(id);
 
 			request.onsuccess = () => {
-				resolve(request.result || undefined);
+				const result = request.result as T | undefined;
+				resolve(result ?? undefined);
 				db.close();
 			};
 
 			request.onerror = () => {
 				db.close();
-				reject(request.error?.message || "Unknown error");
+				reject(toDbError(request.error));
 			};
 		});
 	}
@@ -100,7 +105,7 @@ export class Table<T extends { id: string }> {
 
 			request.onerror = () => {
 				db.close();
-				reject(request.error?.message || "Unknown error");
+				reject(toDbError(request.error));
 			};
 		});
 	}
@@ -119,7 +124,7 @@ export class Table<T extends { id: string }> {
 
 			request.onerror = () => {
 				db.close();
-				reject(request.error?.message || "Unknown error");
+				reject(toDbError(request.error));
 			};
 		});
 	}
@@ -138,7 +143,7 @@ export class Table<T extends { id: string }> {
 
 			request.onerror = () => {
 				db.close();
-				reject(request.error?.message || "Unknown error");
+				reject(toDbError(request.error));
 			};
 		});
 	}
@@ -157,7 +162,7 @@ export class Table<T extends { id: string }> {
 
 			request.onerror = () => {
 				db.close();
-				reject(request.error?.message || "Unknown error");
+				reject(toDbError(request.error));
 			};
 		});
 	}
@@ -187,7 +192,7 @@ export class Table<T extends { id: string }> {
 				request.onerror = () => {
 					hasError = true;
 					db.close();
-					reject(request.error?.message || "Unknown error");
+					reject(toDbError(request.error));
 				};
 			}
 		});
@@ -220,7 +225,7 @@ export class Table<T extends { id: string }> {
 
 					request.onerror = () => {
 						db.close();
-						reject(request.error?.message || "Unknown error");
+						reject(toDbError(request.error));
 					};
 				});
 			},

@@ -5,7 +5,6 @@ import type {
 	GetBuildResponse,
 	BuildRequestNotReadyResponse,
 	DownloadBuildResult,
-	DownloadBuildSuccess,
 	HelperVersionTooOldResponse,
 } from "./response";
 
@@ -147,7 +146,7 @@ export class ApiService {
 				const contentType = getHeader(response.headers, "content-type");
 				const sha256 = getHeader(response.headers, "x-sha256");
 				if (contentType === "application/zip" && sha256) {
-					return { response, sha256 } as DownloadBuildSuccess;
+					return { response, sha256 };
 				}
 				throw new ApiException(ApiError.UnknownError);
 			}

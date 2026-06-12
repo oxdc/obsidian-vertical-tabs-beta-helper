@@ -3,6 +3,7 @@ import globals from "globals";
 import { defineConfig, globalIgnores } from "eslint/config";
 
 export default defineConfig(
+	...obsidianmd.configs.recommended,
 	globalIgnores([
 		"node_modules",
 		"dist",
@@ -21,6 +22,7 @@ export default defineConfig(
 		languageOptions: {
 			globals: {
 				...globals.browser,
+				...globals.node,
 			},
 			parserOptions: {
 				projectService: {
@@ -30,6 +32,10 @@ export default defineConfig(
 				extraFileExtensions: [".json"],
 			},
 		},
-	},
-	...obsidianmd.configs.recommended
+		rules: {
+			"obsidianmd/rule-custom-message": "off",
+			"no-restricted-globals": "off",
+			"obsidianmd/ui/sentence-case": "off",
+		},
+	}
 );
