@@ -1,7 +1,7 @@
 import esbuild from "esbuild";
 import process from "process";
-import builtins from "builtin-modules";
 import dotenv from "dotenv";
+import { builtinModules } from "node:module";
 import { existsSync, readFileSync } from "fs";
 import { sassPlugin } from "esbuild-sass-plugin";
 
@@ -22,12 +22,8 @@ const context = await esbuild.context({
 		js: banner,
 	},
 	define: {
-		"process.env.BETA_SERVER": JSON.stringify(
-			process.env.BETA_SERVER || "vertical-tabs-prod.oxdc.dev"
-		),
-		"process.env.USER_AGENT_VERSION": JSON.stringify(
-			process.env.USER_AGENT_VERSION || packageJson.version
-		),
+		"process.env.BETA_SERVER": JSON.stringify(process.env.BETA_SERVER || "vertical-tabs-prod.oxdc.dev"),
+		"process.env.USER_AGENT_VERSION": JSON.stringify(process.env.USER_AGENT_VERSION || packageJson.version),
 	},
 	entryPoints: ["src/styles.scss", "src/main.ts"],
 	bundle: true,
@@ -45,7 +41,7 @@ const context = await esbuild.context({
 		"@lezer/common",
 		"@lezer/highlight",
 		"@lezer/lr",
-		...builtins,
+		...builtinModules,
 	],
 	format: "cjs",
 	target: "es2018",

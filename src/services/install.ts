@@ -2,7 +2,7 @@ import { App, normalizePath, DataAdapter } from "obsidian";
 import { DownloadBuildSuccess, isDownloadBuildSuccess } from "./response";
 import { ApiService, ApiException, ApiError } from "./api";
 import { errorToString as e, randomString, RetryConfig, retryWithBackoff } from "../common/utils";
-import JSZip from "jszip";
+import { unzip } from "unzipit";
 import { runPostinstallationTasks, runPreinstallationTasks } from "./migration";
 import { installLog, installLogError } from "./installLog";
 
@@ -84,9 +84,8 @@ async function verifyAndInstall(app: App, result: DownloadBuildSuccess): Promise
 
 		// Step 2: Open the ZIP archive
 		installLog("Opening ZIP archive...");
-		const zip = new JSZip();
-		await zip.loadAsync(binaryData);
-		const zipEntries = Object.keys(zip.files);
+		const { entries } = await unzip(binaryData);
+		const zipEntries = Object.keys(entries);
 		if (zipEntries.length === 0) throw new InstallException("The downloaded file is empty or corrupted.");
 		installLog(`ZIP contains ${zipEntries.length} entries.`);
 
@@ -94,10 +93,10 @@ async function verifyAndInstall(app: App, result: DownloadBuildSuccess): Promise
 		installLog(`Extracting to ${tempDir}...`);
 		await fs.mkdir(tempDir);
 		let fileCount = 0;
-		for (const [relativePath, zipEntry] of Object.entries(zip.files)) {
+		for (const [relativePath, zipEntry] of Object.entries(entries)) {
 			const path = normalizePath(`${tempDir}/${relativePath}`);
-			if (zipEntry.dir) continue;
-			const content = await zipEntry.async("arraybuffer");
+			if (zipEntry.isDirectory) continue;
+			const content = await zipEntry.arrayBuffer();
 			await fs.writeBinary(path, content);
 			fileCount++;
 		}
