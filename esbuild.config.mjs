@@ -1,11 +1,8 @@
 import esbuild from "esbuild";
 import process from "process";
-import dotenv from "dotenv";
 import { builtinModules } from "node:module";
-import { existsSync, readFileSync } from "fs";
+import { readFileSync } from "fs";
 import { sassPlugin } from "esbuild-sass-plugin";
-
-if (existsSync(".env")) dotenv.config();
 
 const packageJson = JSON.parse(readFileSync("package.json", "utf8"));
 

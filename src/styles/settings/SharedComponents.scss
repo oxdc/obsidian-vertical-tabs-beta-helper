@@ -6,11 +6,15 @@
 }
 
 .vt-beta-header {
-	h1 {
+	.vt-h1 {
 		display: block !important;
 		white-space: nowrap;
 		font-size: clamp(1rem, 2vw, 2rem);
 		max-width: 100%;
+		padding: 0 var(--size-4-4);
+		margin: 0 0 var(--size-4-4);
+		color: var(--setting-group-heading-color);
+		font-weight: var(--setting-group-heading-weight);
 	}
 
 	&.new-design {
@@ -89,7 +93,7 @@
 
 .vt-loading-icon {
 	height: 1rem;
-    width: 1rem;
+	width: 1rem;
 	color: transparent;
 	position: relative;
 	white-space: nowrap;

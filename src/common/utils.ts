@@ -1,3 +1,17 @@
+import { moment } from "obsidian";
+
+type MomentInstance = {
+	format(fmt: string): string;
+	fromNow(): string;
+	clone(): MomentInstance;
+	diff(other: MomentInstance, unit: string): number;
+	add(amount: number, unit: string): MomentInstance;
+};
+
+export function parseMoment(inp?: string | Date): MomentInstance {
+	return (moment as unknown as (inp?: string | Date) => MomentInstance)(inp);
+}
+
 export function stripTokenDashes(token: string): string {
 	return token.trim().replace(/-/g, "");
 }
@@ -9,7 +23,7 @@ export function randomString(length: number): string {
 }
 
 export async function sleep(ms: number): Promise<void> {
-	return new Promise((resolve) => setTimeout(resolve, ms));
+	return new Promise((resolve) => window.setTimeout(resolve, ms));
 }
 
 export function makeError(error: unknown): Error {

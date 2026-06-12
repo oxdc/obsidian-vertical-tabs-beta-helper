@@ -12,8 +12,7 @@ import {
 import { SecurityWarningConfirmationModal } from "./warning";
 import { normalizeToken, refreshSubscription, validateToken } from "./services/auth";
 import { listBuilds } from "./services/list";
-import moment from "moment";
-import { errorToString as e } from "./common/utils";
+import { errorToString as e, parseMoment } from "./common/utils";
 import { ReleaseNoteModal } from "./release_note";
 import { BuildsResult, cache, SubscriptionData } from "./services/cache";
 
@@ -200,7 +199,7 @@ export class VTBetaHelperSettingTab extends PluginSettingTab {
 	private displayHeader(parentEl: HTMLElement, props: HeaderProps) {
 		const headerEl = parentEl.createDiv({ cls: "vt-beta-header" });
 		if (requireApiVersion("1.11.0")) headerEl.addClass("new-design");
-		const headerWrapperEl = headerEl.createEl("h1");
+		const headerWrapperEl = headerEl.createDiv({ cls: "vt-h1" });
 		headerWrapperEl.appendText(props.title + " ");
 		headerWrapperEl.createSpan({ cls: "vt-beta-tag", text: "Beta" });
 		headerEl.createEl("p", { text: props.description });
@@ -609,7 +608,7 @@ export class VTBetaHelperSettingTab extends PluginSettingTab {
 	private renderSubscriptionInfo(parentEl: HTMLElement, subscription: SubscriptionData) {
 		const statusEl = parentEl.createDiv({ cls: "vt-beta-subscription" });
 		const { email, expires_at, valid } = subscription;
-		const expiryDate = moment(expires_at);
+		const expiryDate = parseMoment(expires_at);
 		const expiryDateText = expiryDate.format("L");
 
 		const subscriberEl = statusEl.createDiv({
@@ -636,7 +635,7 @@ export class VTBetaHelperSettingTab extends PluginSettingTab {
 		});
 		if (!valid) {
 			const deletionDate = expiryDate.clone().add(90, "days");
-			const daysUntilDeletion = deletionDate.diff(moment(), "days");
+			const daysUntilDeletion = deletionDate.diff(parseMoment(), "days");
 			const deletionDateText = deletionDate.format("MMM Do, YYYY");
 			if (daysUntilDeletion > 0) {
 				reminderEl.setText(

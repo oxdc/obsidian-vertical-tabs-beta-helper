@@ -73,7 +73,7 @@ export class SecurityWarningConfirmationModal extends Modal {
 			}
 		};
 
-		setTimeout(() => inputEl?.focus(), 100);
+		window.setTimeout(() => inputEl?.focus(), 100);
 	}
 
 	private updateButtonState(inputEl: HTMLInputElement, confirmButton: HTMLButtonElement) {

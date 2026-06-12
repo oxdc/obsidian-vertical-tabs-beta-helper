@@ -1,5 +1,4 @@
-import { requestUrl, RequestUrlParam, RequestUrlResponse } from "obsidian";
-import moment from "moment";
+import { moment, requestUrl, RequestUrlParam, RequestUrlResponse } from "obsidian";
 import type {
 	GetSubscriptionResponse,
 	ListBuildsResponse,
