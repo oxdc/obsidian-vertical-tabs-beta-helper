@@ -16,20 +16,24 @@
 	"devDependencies": {
 		"@eslint/js": "^9.39.4",
 		"@types/node": "^16.11.6",
-		"@types/semver": "^7.7.1",
+		"@types/semver": "^7.7.0",
 		"esbuild": "^0.25.0",
+		"esbuild-sass-plugin": "^3.3.1",
 		"eslint": "^9.39.4",
-		"eslint-plugin-obsidianmd": "^0.3.0",
+		"eslint-plugin-obsidianmd": "^0.4.1",
 		"jiti": "^2.6.1",
-		"obsidian": "^1.11.0",
-		"obsidian-typings": "^6.0.0",
+		"obsidian": "^1.13.1",
+		"obsidian-typings": "^5.20.0",
 		"tslib": "2.4.0",
 		"typescript": "^5.6.0",
 		"typescript-eslint": "^8.59.1"
 	},
 	"dependencies": {
-		"esbuild-sass-plugin": "^3.3.1",
-		"unzipit": "^2.0.3",
-		"semver": "^7.7.3"
+		"globals": "^17.8.0",
+		"semver": "^7.7.3",
+		"unzipit": "^2.0.3"
+	},
+	"overrides": {
+		"minimatch": "^10.2.5"
 	}
 }

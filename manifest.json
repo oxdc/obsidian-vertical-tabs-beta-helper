@@ -2,7 +2,7 @@
 	"id": "vertical-tabs-beta-helper",
 	"name": "Vertical Tabs Beta Helper",
 	"version": "1.10.0",
-	"minAppVersion": "1.6.2",
+	"minAppVersion": "1.11.0",
 	"description": "Utility plugin for managing Vertical Tabs beta versions.",
 	"author": "oxdc",
 	"authorUrl": "https://github.com/oxdc",

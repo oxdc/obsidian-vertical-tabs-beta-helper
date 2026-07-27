@@ -54,6 +54,10 @@ export class VTBetaHelperSettingTab extends PluginSettingTab {
 		}
 	}
 
+	refresh(): void {
+		this.display();
+	}
+
 	display(): void {
 		const { containerEl } = this;
 		containerEl.empty();
@@ -149,7 +153,7 @@ export class VTBetaHelperSettingTab extends PluginSettingTab {
 			this.plugin.settings.token = "";
 			await this.plugin.saveSettings();
 			this.plugin.stopUpdateChecker();
-			this.display();
+			this.refresh();
 		};
 
 		const setToken = async () => {
@@ -160,7 +164,7 @@ export class VTBetaHelperSettingTab extends PluginSettingTab {
 				this.plugin.settings.token = token;
 				await this.plugin.saveSettings();
 				this.plugin.startUpdateChecker();
-				this.display();
+				this.refresh();
 			} else {
 				if (inputEl) {
 					inputEl.setCustomValidity(errorMessage);
@@ -286,7 +290,7 @@ export class VTBetaHelperSettingTab extends PluginSettingTab {
 				.setTooltip("Refresh")
 				.onClick(() => {
 					cache.invalidate();
-					this.display();
+					this.refresh();
 				});
 		};
 		if (parentEl instanceof Setting) {
@@ -320,7 +324,7 @@ export class VTBetaHelperSettingTab extends PluginSettingTab {
 			this.displayBuildList(buildsEl, result);
 		} catch (error) {
 			buildsEl.empty();
-			buildsEl.createEl("div", {
+			buildsEl.createDiv({
 				cls: "setting-item",
 				text: "Unable to load builds: " + e(error),
 			});
@@ -329,7 +333,7 @@ export class VTBetaHelperSettingTab extends PluginSettingTab {
 
 	private displayLoadingIndicator(parentEl: HTMLElement, text: string) {
 		const loadingEl = parentEl.createDiv({ cls: "vt-beta-loading" });
-		const loadingTextEl = loadingEl.createEl("div", {
+		const loadingTextEl = loadingEl.createDiv({
 			cls: "mod-loading setting-item",
 		});
 		loadingTextEl.createSpan({ cls: "vt-loading-icon" });
@@ -337,7 +341,7 @@ export class VTBetaHelperSettingTab extends PluginSettingTab {
 	}
 
 	private displayEmptyList(parentEl: HTMLElement) {
-		parentEl.createEl("div", {
+		parentEl.createDiv({
 			cls: "setting-item",
 			text: "No builds available.",
 		});
@@ -389,7 +393,7 @@ export class VTBetaHelperSettingTab extends PluginSettingTab {
 						if (this.plugin.settings.showReleaseNotes && build.release_note) {
 							new ReleaseNoteModal(this.app, build).open();
 						}
-						this.display();
+						this.refresh();
 					} catch {
 						button.setIcon("download");
 						button.setDisabled(false);
@@ -412,7 +416,7 @@ export class VTBetaHelperSettingTab extends PluginSettingTab {
 				.setDisabled(this.currentPage === 0)
 				.onClick(() => {
 					this.currentPage = 0;
-					this.display();
+					this.refresh();
 				});
 		});
 		paginationEl.addExtraButton((button) => {
@@ -423,7 +427,7 @@ export class VTBetaHelperSettingTab extends PluginSettingTab {
 				.onClick(() => {
 					if (this.currentPage > 0) {
 						this.currentPage--;
-						this.display();
+						this.refresh();
 					}
 				});
 		});
@@ -437,7 +441,7 @@ export class VTBetaHelperSettingTab extends PluginSettingTab {
 				.setDisabled(!has_more)
 				.onClick(() => {
 					this.currentPage++;
-					this.display();
+					this.refresh();
 				});
 		});
 		paginationEl.addExtraButton((button) => {
@@ -447,7 +451,7 @@ export class VTBetaHelperSettingTab extends PluginSettingTab {
 				.setDisabled(!has_more)
 				.onClick(() => {
 					this.currentPage = totalPages - 1;
-					this.display();
+					this.refresh();
 				});
 		});
 	}
@@ -470,7 +474,7 @@ export class VTBetaHelperSettingTab extends PluginSettingTab {
 						} else {
 							this.plugin.stopUpdateChecker();
 						}
-						this.display();
+						this.refresh();
 					})
 				);
 		});
@@ -489,7 +493,7 @@ export class VTBetaHelperSettingTab extends PluginSettingTab {
 							} else {
 								this.plugin.stopUpdateChecker();
 							}
-							this.display();
+							this.refresh();
 						})
 					);
 			});
@@ -511,7 +515,7 @@ export class VTBetaHelperSettingTab extends PluginSettingTab {
 			setting.setName("Show advanced options").addToggle((toggle) =>
 				toggle.setValue(this.showAdvancedOptions).onChange((value) => {
 					this.showAdvancedOptions = value;
-					this.display();
+					this.refresh();
 				})
 			);
 		});
@@ -549,7 +553,7 @@ export class VTBetaHelperSettingTab extends PluginSettingTab {
 						const updateAndSave = async () => {
 							this.plugin.settings.hideSecurityInfo = value;
 							await this.plugin.saveSettings();
-							this.display();
+							this.refresh();
 						};
 
 						if (value) {
@@ -628,7 +632,7 @@ export class VTBetaHelperSettingTab extends PluginSettingTab {
 		expiryEl.createEl("code", { cls: "mod-info", text: expiryDateText });
 		if (!valid) {
 			expiryEl.appendText(" ");
-			expiryEl.createEl("span", {
+			expiryEl.createSpan({
 				cls: "mod-warning",
 				text: `(expired ${expiryDate.fromNow()})`,
 			});
