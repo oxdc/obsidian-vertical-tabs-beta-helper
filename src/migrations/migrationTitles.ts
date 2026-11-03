@@ -1,4 +1,5 @@
 import { App } from "obsidian";
+import { storage } from "src/common/localStorage";
 import { migrationRegistry } from "src/services/migration";
 import { Database, Table } from "src/utils/IndexedDBWrapper";
 
@@ -34,8 +35,8 @@ async function bulkPutGroupMetadata(items: GroupMetadata[]): Promise<void> {
 function findViewStateKeys(): string[] {
 	const pattern = /^vertical-tabs-.+-.+:view-state$/;
 	const keys = ["view-state"];
-	for (let i = 0; i < localStorage.length; i++) {
-		const key = localStorage.key(i);
+	for (let i = 0; i < storage().length; i++) {
+		const key = storage().key(i);
 		if (key && pattern.test(key)) {
 			keys.push(key);
 		}
@@ -63,7 +64,7 @@ export async function migrateGroupTitlesToIndexDB(): Promise<void> {
 		const groupsToMigrate: GroupMetadata[] = [];
 
 		for (const key of viewStateKeys) {
-			const data = localStorage.getItem(key);
+			const data = storage().getItem(key);
 			if (!data) continue;
 
 			const entries = JSON.parse(data) as [string, string][];
@@ -79,7 +80,7 @@ export async function migrateGroupTitlesToIndexDB(): Promise<void> {
 		if (groupsToMigrate.length > 0) {
 			await bulkPutGroupMetadata(groupsToMigrate);
 			console.log(
-				`[Migration] Migrated ${groupsToMigrate.length} group titles to IndexedDB from ${viewStateKeys.length} key(s)`
+				`[Migration] Migrated ${groupsToMigrate.length} group titles to IndexedDB from ${viewStateKeys.length} key(s)`,
 			);
 		} else {
 			console.log("[Migration] No custom group titles to migrate (all were default)");
@@ -122,10 +123,10 @@ export async function migrateGroupTitlesFromIndexDB(): Promise<void> {
 			} else {
 				const data = JSON.stringify(entries);
 				for (const key of viewStateKeys) {
-					localStorage.setItem(key, data);
+					storage().setItem(key, data);
 				}
 				console.log(
-					`[Migration] Migrated ${entries.length} group titles to ${viewStateKeys.length} localStorage key(s)`
+					`[Migration] Migrated ${entries.length} group titles to ${viewStateKeys.length} localStorage key(s)`,
 				);
 			}
 		} else {
@@ -146,7 +147,7 @@ export function cleanupGroupTitlesLocalStorage(): void {
 	try {
 		const viewStateKeys = findViewStateKeys();
 		for (const key of viewStateKeys) {
-			localStorage.removeItem(key);
+			storage().removeItem(key);
 		}
 		console.log(`[Cleanup] Removed ${viewStateKeys.length} view-state key(s) from localStorage`);
 	} catch (error) {

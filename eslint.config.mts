@@ -35,7 +35,6 @@ export default defineConfig(
 		},
 		rules: {
 			"obsidianmd/rule-custom-message": "off",
-			"no-restricted-globals": "off",
 			"obsidianmd/ui/sentence-case": "off",
 		},
 	}

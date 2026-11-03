@@ -1,4 +1,5 @@
 import { App } from "obsidian";
+import { storage } from "src/common/localStorage";
 import { migrationRegistry } from "src/services/migration";
 import { Database, Table } from "src/utils/IndexedDBWrapper";
 
@@ -35,19 +36,19 @@ async function getAllGroupMetadata(): Promise<GroupMetadata[]> {
 }
 
 function loadHiddenGroups(): string[] {
-	const data = localStorage.getItem("hidden-groups");
+	const data = storage().getItem("hidden-groups");
 	if (!data) return [];
 	return JSON.parse(data) as string[];
 }
 
 function loadCollapsedGroups(): string[] {
-	const data = localStorage.getItem("collapsed-groups");
+	const data = storage().getItem("collapsed-groups");
 	if (!data) return [];
 	return JSON.parse(data) as string[];
 }
 
 function loadGroupUnhideTimes(): Map<string, number> {
-	const data = localStorage.getItem("group-unhide-times");
+	const data = storage().getItem("group-unhide-times");
 	if (!data) return new Map();
 	const entries = JSON.parse(data) as [string, number][];
 	return new Map(entries);
@@ -124,9 +125,9 @@ export async function migrateGroupVisibilityFromIndexDB(): Promise<void> {
 			return;
 		}
 
-		localStorage.setItem("hidden-groups", JSON.stringify(hiddenGroups));
-		localStorage.setItem("collapsed-groups", JSON.stringify(collapsedGroups));
-		localStorage.setItem("group-unhide-times", JSON.stringify(unhideEntries));
+		storage().setItem("hidden-groups", JSON.stringify(hiddenGroups));
+		storage().setItem("collapsed-groups", JSON.stringify(collapsedGroups));
+		storage().setItem("group-unhide-times", JSON.stringify(unhideEntries));
 
 		console.log(
 			`[Migration] Migrated ${hiddenGroups.length} hidden, ${collapsedGroups.length} collapsed, and ${unhideEntries.length} unhide time(s) to localStorage`
@@ -142,9 +143,9 @@ export async function migrateGroupVisibilityFromIndexDB(): Promise<void> {
  */
 export function cleanupGroupVisibilityLocalStorage(): void {
 	try {
-		localStorage.removeItem("hidden-groups");
-		localStorage.removeItem("collapsed-groups");
-		localStorage.removeItem("group-unhide-times");
+		storage().removeItem("hidden-groups");
+		storage().removeItem("collapsed-groups");
+		storage().removeItem("group-unhide-times");
 		console.log("[Cleanup] Removed hidden-groups, collapsed-groups, and group-unhide-times from localStorage");
 	} catch (error) {
 		console.error("[Cleanup] Failed to cleanup group visibility from localStorage:", error);
