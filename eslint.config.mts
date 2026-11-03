@@ -8,6 +8,7 @@ export default defineConfig(
 		"node_modules",
 		"dist",
 		"esbuild.config.mjs",
+		"eslint.config.mts",
 		"mangle.mjs",
 		"update-manifest.mjs",
 		"version-bump.mjs",

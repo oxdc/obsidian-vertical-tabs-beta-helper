@@ -1,3 +1,12 @@
+/* Dummy wrapper */
+
+.vt-helper-dummy-group {
+	> .setting-group-search,
+	> .setting-items {
+		display: none;
+	}
+}
+
 /* Header and footer */
 
 .vt-beta-header,
@@ -38,6 +47,8 @@
 /* Token input */
 
 .vt-beta-token {
+	align-items: center;
+
 	.setting-item-info {
 		flex-grow: 0 !important;
 	}
@@ -53,6 +64,10 @@
 		button {
 			width: unset !important;
 		}
+	}
+
+	::before {
+		display: none;
 	}
 }
 
@@ -116,4 +131,10 @@
 		border-radius: 50%;
 		animation: spin 1s ease infinite;
 	}
+}
+
+/* Confirmation dialog */
+
+.vt-beta-confirmation-input {
+	align-items: center;
 }

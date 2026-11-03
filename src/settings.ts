@@ -1,13 +1,16 @@
 import VTBetaHelper from "./main";
 import {
 	App,
-	ExtraButtonComponent,
 	Notice,
 	PluginSettingTab,
 	requireApiVersion,
 	Setting,
+	SettingDefinitionItem,
 	SettingGroup,
+	SettingGroupItem,
 	TextComponent,
+	ToggleComponent,
+	ExtraButtonComponent,
 } from "obsidian";
 import { SecurityWarningConfirmationModal } from "./warning";
 import { normalizeToken, refreshSubscription, validateToken } from "./services/auth";
@@ -17,6 +20,14 @@ import { ReleaseNoteModal } from "./release_note";
 import { BuildsResult, cache, SubscriptionData } from "./services/cache";
 
 const PAGE_SIZE = 5;
+
+const INTERVAL_OPTIONS: Record<string, string> = {
+	"1": "1 Hour",
+	"12": "12 Hours",
+	"24": "1 Day",
+	"48": "2 Days",
+	"168": "1 Week",
+};
 
 export interface VTBetaHelperSettings {
 	token: string;
@@ -41,6 +52,36 @@ interface HeaderProps {
 	description: string;
 }
 
+const WELCOME_SCREEN_HEADER: HeaderProps = {
+	title: "Welcome to Vertical Tabs",
+	description: `This plugin will help you install and manage the beta versions of
+	              Vertical Tabs. To get started, please paste your access token below.`,
+};
+
+const WELCOME_SCREEN_FOOTER: string[] = [
+	`After subscribing to the beta program, you should receive an email
+	   with your access token. If you didn't receive it, please check your
+	   spam folder. If you have any trouble, please contact me on Ko-fi.`,
+	`If you haven't joined the beta program, make sure to read the Terms of
+	   Service, Privacy Policy and FAQ carefully before subscribing. Please
+	   keep your access token private. Vertical Tabs Beta is for personal use
+	   only. Please DO NOT share, sell, or distribute it to anyone.`,
+];
+
+const SETTINGS_SCREEN_HEADER: HeaderProps = {
+	title: "Vertical Tabs",
+	description: "Welcome onboard! And thank you for your support!",
+};
+
+const SETTINGS_SCREEN_FOOTER: string[] = [
+	`To rollback to the public version of Vertical Tabs, please unsubscribe
+	   on Ko-fi, uninstall Vertical Tabs Beta and this helper, then reinstall
+	   Vertical Tabs from the community plugin store. Your settings may not be
+	   compatible with the public version and will not be preserved.`,
+	`Please keep your access token private. Vertical Tabs Beta is for personal
+	   use only. Please DO NOT share, sell, or distribute it to anyone.`,
+];
+
 export class VTBetaHelperSettingTab extends PluginSettingTab {
 	plugin: VTBetaHelper;
 	private currentPage = 0;
@@ -55,10 +96,15 @@ export class VTBetaHelperSettingTab extends PluginSettingTab {
 	}
 
 	refresh(): void {
-		this.display();
+		if (requireApiVersion("1.13.0")) this.update();
+		else this.render();
 	}
 
 	display(): void {
+		this.render();
+	}
+
+	render(): void {
 		const { containerEl } = this;
 		containerEl.empty();
 
@@ -96,52 +142,26 @@ export class VTBetaHelperSettingTab extends PluginSettingTab {
 		}
 	}
 
+	private createLink(parentEl: HTMLElement, href: string, text: string) {
+		return parentEl.createEl("a", { href, text }).setAttr("target", "_blank");
+	}
+
 	// Shared components
 
 	private displayDocLinks(parentEl: HTMLElement) {
 		const docEl = parentEl.createEl("p", { cls: "vt-beta-doc-links" });
 		if (requireApiVersion("1.11.0")) docEl.addClass("new-design");
-		docEl
-			.createEl("a", {
-				href: "https://vertical-tabs-docs.oxdc.dev/Beta-Versions/terms",
-				text: "Terms of service",
-			})
-			.setAttr("target", "_blank");
+		this.createLink(docEl, "https://vertical-tabs-docs.oxdc.dev/Beta-Versions/terms", "Terms of service");
 		docEl.appendText(" · ");
-		docEl
-			.createEl("a", {
-				href: "https://vertical-tabs-docs.oxdc.dev/Beta-Versions/security",
-				text: "Privacy policy",
-			})
-			.setAttr("target", "_blank");
+		this.createLink(docEl, "https://vertical-tabs-docs.oxdc.dev/Beta-Versions/security", "Privacy policy");
 		docEl.appendText(" · ");
-		docEl
-			.createEl("a", {
-				href: "https://vertical-tabs-docs.oxdc.dev/Beta-Versions/beta-faq",
-				text: "FAQ",
-			})
-			.setAttr("target", "_blank");
+		this.createLink(docEl, "https://vertical-tabs-docs.oxdc.dev/Beta-Versions/beta-faq", "FAQ");
 		docEl.appendText(" · ");
-		docEl
-			.createEl("a", {
-				href: "https://status.oxdc.dev",
-				text: "Status",
-			})
-			.setAttr("target", "_blank");
+		this.createLink(docEl, "https://status.oxdc.dev", "Status");
 		docEl.appendText(" · ");
-		docEl
-			.createEl("a", {
-				href: "https://ko-fi.com/oxdcq",
-				text: "Ko-fi",
-			})
-			.setAttr("target", "_blank");
+		this.createLink(docEl, "https://ko-fi.com/oxdcq", "Ko-fi");
 		docEl.appendText(" · ");
-		docEl
-			.createEl("a", {
-				href: "https://github.com/oxdc/obsidian-vertical-tabs",
-				text: "GitHub",
-			})
-			.setAttr("target", "_blank");
+		this.createLink(docEl, "https://github.com/oxdc/obsidian-vertical-tabs", "GitHub");
 	}
 
 	private displayTokenInput(parentEl: HTMLElement | SettingGroup, filled = false) {
@@ -221,48 +241,22 @@ export class VTBetaHelperSettingTab extends PluginSettingTab {
 
 	private displayWelcomeScreen(parentEl: HTMLElement) {
 		const containerEl = parentEl.createDiv({ cls: "vt-beta-welcome" });
-		this.displayHeader(containerEl, {
-			title: "Welcome to Vertical Tabs",
-			description: `This plugin will help you install and manage the beta versions of
-			              Vertical Tabs. To get started, please paste your access token below.`,
-		});
-
+		this.displayHeader(containerEl, WELCOME_SCREEN_HEADER);
 		this.displayTokenInput(containerEl, false);
 		this.displayDocLinks(containerEl);
-
-		this.displayFooter(containerEl, [
-			`After subscribing to the beta program, you should receive an email
-			   with your access token. If you didn't receive it, please check your
-			   spam folder. If you have any trouble, please contact me on Ko-fi.`,
-			`If you haven't joined the beta program, make sure to read the Terms of
-			   Service, Privacy Policy and FAQ carefully before subscribing. Please
-			   keep your access token private. Vertical Tabs Beta is for personal use
-			   only. Please DO NOT share, sell, or distribute it to anyone.`,
-		]);
+		this.displayFooter(containerEl, WELCOME_SCREEN_FOOTER);
 	}
 
 	// Settings screen
 
 	private displaySettingsScreen(parentEl: HTMLElement) {
 		const containerEl = parentEl.createDiv({ cls: "vt-beta-settings" });
-		this.displayHeader(containerEl, {
-			title: "Vertical Tabs",
-			description: "Welcome onboard! And thank you for your support!",
-		});
-
+		this.displayHeader(containerEl, SETTINGS_SCREEN_HEADER);
 		this.displayBuilds(containerEl);
 		this.displayOptions(containerEl);
 		this.displayLicense(containerEl);
 		this.displayDocLinks(containerEl);
-
-		this.displayFooter(containerEl, [
-			`To rollback to the public version of Vertical Tabs, please unsubscribe
-			   on Ko-fi, uninstall Vertical Tabs Beta and this helper, then reinstall
-			   Vertical Tabs from the community plugin store. Your settings may not be
-			   compatible with the public version and will not be preserved.`,
-			`Please keep your access token private. Vertical Tabs Beta is for personal
-			   use only. Please DO NOT share, sell, or distribute it to anyone.`,
-		]);
+		this.displayFooter(containerEl, SETTINGS_SCREEN_FOOTER);
 	}
 
 	// Settings screen - Builds
@@ -475,7 +469,7 @@ export class VTBetaHelperSettingTab extends PluginSettingTab {
 							this.plugin.stopUpdateChecker();
 						}
 						this.refresh();
-					})
+					}),
 				);
 		});
 
@@ -494,7 +488,7 @@ export class VTBetaHelperSettingTab extends PluginSettingTab {
 								this.plugin.stopUpdateChecker();
 							}
 							this.refresh();
-						})
+						}),
 					);
 			});
 		}
@@ -507,7 +501,7 @@ export class VTBetaHelperSettingTab extends PluginSettingTab {
 					toggle.setValue(this.plugin.settings.showReleaseNotes).onChange(async (value) => {
 						this.plugin.settings.showReleaseNotes = value;
 						await this.plugin.saveSettings();
-					})
+					}),
 				);
 		});
 
@@ -516,7 +510,7 @@ export class VTBetaHelperSettingTab extends PluginSettingTab {
 				toggle.setValue(this.showAdvancedOptions).onChange((value) => {
 					this.showAdvancedOptions = value;
 					this.refresh();
-				})
+				}),
 			);
 		});
 
@@ -529,11 +523,7 @@ export class VTBetaHelperSettingTab extends PluginSettingTab {
 					.setDesc("Set how often to check for updates.")
 					.addDropdown((dropdown) => {
 						dropdown
-							.addOption("1", "1 Hour")
-							.addOption("12", "12 Hours")
-							.addOption("24", "1 Day")
-							.addOption("48", "2 Days")
-							.addOption("168", "1 Week")
+							.addOptions(INTERVAL_OPTIONS)
 							.setValue(this.plugin.settings.updateCheckInterval.toString())
 							.onChange(async (value) => {
 								this.plugin.settings.updateCheckInterval = parseInt(value);
@@ -548,31 +538,28 @@ export class VTBetaHelperSettingTab extends PluginSettingTab {
 			setting
 				.setName("Hide security warnings")
 				.setDesc("Disable beta version integrity check.")
-				.addToggle((toggle) =>
-					toggle.setValue(this.plugin.settings.hideSecurityInfo).onChange(async (value) => {
-						const updateAndSave = async () => {
-							this.plugin.settings.hideSecurityInfo = value;
-							await this.plugin.saveSettings();
-							this.refresh();
-						};
+				.addToggle((toggle) => this.configureHideSecurityToggle(toggle));
+		});
+	}
 
-						if (value) {
-							// To enable, show confirmation modal
-							new SecurityWarningConfirmationModal(this.app, {
-								onConfirm: () => {
-									void updateAndSave();
-								},
-								onCancel: () => {
-									toggle.setValue(false);
-								},
-							}).open();
-						} else {
-							// To disable, no confirmation needed
-							await updateAndSave();
-							return;
-						}
-					})
-				);
+	private configureHideSecurityToggle(toggle: ToggleComponent) {
+		toggle.setValue(this.plugin.settings.hideSecurityInfo).onChange(async (value) => {
+			const updateAndSave = async () => {
+				this.plugin.settings.hideSecurityInfo = value;
+				await this.plugin.saveSettings();
+				this.refresh();
+			};
+
+			if (value) {
+				// To enable, show confirmation modal
+				new SecurityWarningConfirmationModal(this.app, {
+					onConfirm: () => void updateAndSave(),
+					onCancel: () => void toggle.setValue(false),
+				}).open();
+			} else {
+				// To disable, no confirmation needed
+				await updateAndSave();
+			}
 		});
 	}
 
@@ -605,9 +592,7 @@ export class VTBetaHelperSettingTab extends PluginSettingTab {
 			this.renderSubscriptionInfo(subscriptionEl, subscription);
 		} catch (error) {
 			subscriptionEl.empty();
-			const statusEl = subscriptionEl.createDiv({
-				cls: "vt-beta-subscription",
-			});
+			const statusEl = subscriptionEl.createDiv({ cls: "vt-beta-subscription" });
 			statusEl.toggleClass("mod-error", true);
 			statusEl.setText("Unable to load subscription: " + e(error));
 		}
@@ -619,15 +604,11 @@ export class VTBetaHelperSettingTab extends PluginSettingTab {
 		const expiryDate = parseMoment(expires_at);
 		const expiryDateText = expiryDate.format("L");
 
-		const subscriberEl = statusEl.createDiv({
-			cls: "vt-beta-subscription-detail",
-		});
+		const subscriberEl = statusEl.createDiv({ cls: "vt-beta-subscription-detail" });
 		subscriberEl.appendText("Issued to ");
 		subscriberEl.createEl("code", { cls: "mod-info", text: email });
 
-		const expiryEl = statusEl.createDiv({
-			cls: "vt-beta-subscription-detail",
-		});
+		const expiryEl = statusEl.createDiv({ cls: "vt-beta-subscription-detail" });
 		expiryEl.appendText("Valid until ");
 		expiryEl.createEl("code", { cls: "mod-info", text: expiryDateText });
 		if (!valid) {
@@ -638,9 +619,7 @@ export class VTBetaHelperSettingTab extends PluginSettingTab {
 			});
 		}
 
-		const reminderEl = statusEl.createDiv({
-			cls: "vt-beta-subscription-expiration-reminder",
-		});
+		const reminderEl = statusEl.createDiv({ cls: "vt-beta-subscription-expiration-reminder" });
 		if (!valid) {
 			const deletionDate = expiryDate.clone().add(90, "days");
 			const daysUntilDeletion = deletionDate.diff(parseMoment(), "days");
@@ -649,17 +628,150 @@ export class VTBetaHelperSettingTab extends PluginSettingTab {
 				reminderEl.setText(
 					`Please renew by ${deletionDateText} (${deletionDate.fromNow()}) to keep 
 					 your account. If your account is deleted, resubscribing will create a
-					 new account with a new token that you'll need to enter on all your devices.`
+					 new account with a new token that you'll need to enter on all your devices.`,
 				);
 			} else {
 				reminderEl.setText(
 					`Your account has been deleted for privacy reasons. If you resubscribe,
 					 a new account will be created with a new token that you'll need to use
-					 on all your devices.`
+					 on all your devices.`,
 				);
 			}
 		} else {
 			reminderEl.setText("");
 		}
+	}
+
+	getSettingDefinitions(): SettingDefinitionItem[] {
+		if (!this.plugin.settings.token.trim()) {
+			this.currentPage = 0;
+			return this.getWelcomeScreenDefinitions();
+		}
+		return this.getSettingsScreenDefinitions();
+	}
+
+	private wrapAsDummyGroup(name: string, render: (parentEl: HTMLElement) => void): SettingDefinitionItem {
+		return {
+			type: "group",
+			items: [
+				{
+					name,
+					searchable: name !== "",
+					render: (_, group) => {
+						group.groupEl.addClass("vt-helper-dummy-group");
+						const contentEl =
+							group.groupEl.querySelector<HTMLElement>(":scope > .vt-dummy-content") ??
+							group.groupEl.createDiv("vt-dummy-content");
+						contentEl.empty();
+						try {
+							render(contentEl);
+						} catch (error) {
+							console.error("Vertical Tabs Beta Helper: failed to render settings section", error);
+						}
+					},
+				},
+			],
+		};
+	}
+
+	private getWelcomeScreenDefinitions(): SettingDefinitionItem[] {
+		return [this.wrapAsDummyGroup("Welcome to Vertical Tabs", (parentEl) => this.displayWelcomeScreen(parentEl))];
+	}
+
+	private getSettingsScreenDefinitions(): SettingDefinitionItem[] {
+		return [
+			this.wrapAsDummyGroup("", (parentEl) => this.displayHeader(parentEl, SETTINGS_SCREEN_HEADER)),
+			this.wrapAsDummyGroup("Available builds", (parentEl) => this.displayBuilds(parentEl)),
+			{ type: "group", heading: "Options", items: this.getOptionsDefinitions() },
+			this.wrapAsDummyGroup("License", (parentEl) => this.displayLicense(parentEl)),
+			this.wrapAsDummyGroup("", (parentEl) => {
+				this.displayDocLinks(parentEl);
+				this.displayFooter(parentEl, SETTINGS_SCREEN_FOOTER);
+			}),
+		];
+	}
+
+	private getOptionsDefinitions(): SettingGroupItem[] {
+		return [
+			{
+				name: "Auto update",
+				desc: "Whether to automatically check and update Vertical Tabs.",
+				control: { type: "toggle", key: "autoUpdate" },
+			},
+			{
+				name: "Show update notification",
+				desc: "Whether to show a notification when a new version is available.",
+				visible: () => !this.plugin.settings.autoUpdate,
+				control: { type: "toggle", key: "showUpdateNotification" },
+			},
+			{
+				name: "Show release notes",
+				desc: "Whether to show what's new in the latest beta version.",
+				control: { type: "toggle", key: "showReleaseNotes" },
+			},
+			{
+				name: "Show advanced options",
+				control: { type: "toggle", key: "showAdvancedOptions" },
+			},
+			{
+				name: "Update check interval",
+				desc: "Set how often to check for updates.",
+				visible: () =>
+					this.showAdvancedOptions && (this.plugin.settings.autoUpdate || this.plugin.settings.showUpdateNotification),
+				control: { type: "dropdown", key: "updateCheckInterval", options: INTERVAL_OPTIONS },
+			},
+			{
+				name: "Hide security warnings",
+				desc: "Disable beta version integrity check.",
+				visible: () => this.showAdvancedOptions,
+				render: (setting) => void setting.addToggle((toggle) => this.configureHideSecurityToggle(toggle)),
+			},
+		];
+	}
+
+	getControlValue(key: string): unknown {
+		switch (key) {
+			case "showAdvancedOptions":
+				return this.showAdvancedOptions;
+			case "updateCheckInterval":
+				return this.plugin.settings.updateCheckInterval.toString();
+			default:
+				return (this.plugin.settings as unknown as Record<string, unknown>)[key];
+		}
+	}
+
+	async setControlValue(key: string, value: unknown): Promise<void> {
+		switch (key) {
+			case "autoUpdate":
+				this.plugin.settings.autoUpdate = value as boolean;
+				await this.plugin.saveSettings();
+				if (this.plugin.settings.autoUpdate || this.plugin.settings.showUpdateNotification) {
+					this.plugin.startUpdateChecker();
+				} else {
+					this.plugin.stopUpdateChecker();
+				}
+				break;
+			case "showUpdateNotification":
+				this.plugin.settings.showUpdateNotification = value as boolean;
+				await this.plugin.saveSettings();
+				if (value) {
+					this.plugin.startUpdateChecker();
+				} else {
+					this.plugin.stopUpdateChecker();
+				}
+				break;
+			case "showAdvancedOptions":
+				this.showAdvancedOptions = value as boolean;
+				break;
+			case "updateCheckInterval":
+				this.plugin.settings.updateCheckInterval = parseInt(value as string);
+				await this.plugin.saveSettings();
+				this.plugin.startUpdateChecker();
+				break;
+			default:
+				(this.plugin.settings as unknown as Record<string, unknown>)[key] = value;
+				await this.plugin.saveSettings();
+		}
+		if (requireApiVersion("1.13.0")) this.refreshDomState();
 	}
 }
