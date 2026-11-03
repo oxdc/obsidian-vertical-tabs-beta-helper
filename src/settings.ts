@@ -8,6 +8,7 @@ import {
 	SettingDefinitionItem,
 	SettingGroup,
 	SettingGroupItem,
+	ButtonComponent,
 	TextComponent,
 	ToggleComponent,
 	ExtraButtonComponent,
@@ -30,7 +31,6 @@ const INTERVAL_OPTIONS: Record<string, string> = {
 };
 
 export interface VTBetaHelperSettings {
-	token: string;
 	autoUpdate: boolean;
 	updateCheckInterval: number;
 	showUpdateNotification: boolean;
@@ -39,7 +39,6 @@ export interface VTBetaHelperSettings {
 }
 
 export const DEFAULT_SETTINGS: VTBetaHelperSettings = {
-	token: "",
 	autoUpdate: true,
 	updateCheckInterval: 1,
 	showUpdateNotification: true,
@@ -108,7 +107,7 @@ export class VTBetaHelperSettingTab extends PluginSettingTab {
 		const { containerEl } = this;
 		containerEl.empty();
 
-		if (!this.plugin.settings.token.trim()) {
+		if (!this.plugin.getToken()) {
 			this.currentPage = 0;
 			this.displayWelcomeScreen(containerEl);
 		} else {
@@ -164,18 +163,13 @@ export class VTBetaHelperSettingTab extends PluginSettingTab {
 		this.createLink(docEl, "https://github.com/oxdc/obsidian-vertical-tabs", "GitHub");
 	}
 
-	private displayTokenInput(parentEl: HTMLElement | SettingGroup, filled = false) {
-		let token = "";
+	private displayTokenInput(parentEl: HTMLElement | SettingGroup) {
 		let textEl: TextComponent | null;
 		let inputEl: HTMLInputElement | null;
 
-		const removeToken = async () => {
-			await this.plugin.setToken("");
-			this.plugin.stopUpdateChecker();
-			this.refresh();
-		};
-
 		const setToken = async () => {
+			if (textEl?.disabled) return;
+			const token = normalizeToken(inputEl?.value ?? "");
 			textEl?.setDisabled(true);
 			const { isValid, errorMessage } = await validateToken(token);
 			textEl?.setDisabled(false);
@@ -183,13 +177,11 @@ export class VTBetaHelperSettingTab extends PluginSettingTab {
 				await this.plugin.setToken(token);
 				this.plugin.startUpdateChecker();
 				this.refresh();
+			} else if (inputEl) {
+				inputEl.setCustomValidity(errorMessage);
+				inputEl.reportValidity();
 			} else {
-				if (inputEl) {
-					inputEl.setCustomValidity(errorMessage);
-					inputEl.reportValidity();
-				} else {
-					new Notice(errorMessage, 0);
-				}
+				new Notice(errorMessage, 0);
 			}
 		};
 
@@ -198,22 +190,25 @@ export class VTBetaHelperSettingTab extends PluginSettingTab {
 				.setName("Access token")
 				.setClass("vt-beta-token")
 				.addText((text) => {
-					text
-						.setPlaceholder("Enter your access token")
-						.setValue(this.plugin.settings.token)
-						.onChange((value) => {
-							token = normalizeToken(value);
-							if (inputEl) inputEl.setCustomValidity("");
-						})
-						.setDisabled(filled);
+					text.setPlaceholder("Enter your access token").onChange(() => {
+						if (inputEl) inputEl.setCustomValidity("");
+					});
 					textEl = text;
 					inputEl = text.inputEl;
+					let lastCompositionEndAt: number | null = null;
+					inputEl.addEventListener("compositionend", (event) => {
+						lastCompositionEndAt = event.timeStamp;
+					});
+					inputEl.addEventListener("keydown", (event) => {
+						if (event.key !== "Enter") return;
+						event.preventDefault();
+						if (event.isComposing) return;
+						if (lastCompositionEndAt !== null && Math.abs(event.timeStamp - lastCompositionEndAt) < 50) return;
+						void setToken();
+					});
 				})
 				.addButton((button) => {
-					button
-						.setButtonText(filled ? "Remove" : "Continue")
-						.onClick(async () => (filled ? removeToken() : setToken()));
-					if (filled) button.setWarning();
+					button.setButtonText("Continue").onClick(() => void setToken());
 				});
 		});
 	}
@@ -240,7 +235,7 @@ export class VTBetaHelperSettingTab extends PluginSettingTab {
 	private displayWelcomeScreen(parentEl: HTMLElement) {
 		const containerEl = parentEl.createDiv({ cls: "vt-beta-welcome" });
 		this.displayHeader(containerEl, WELCOME_SCREEN_HEADER);
-		this.displayTokenInput(containerEl, false);
+		this.displayTokenInput(containerEl);
 		this.displayDocLinks(containerEl);
 		this.displayFooter(containerEl, WELCOME_SCREEN_FOOTER);
 	}
@@ -294,7 +289,7 @@ export class VTBetaHelperSettingTab extends PluginSettingTab {
 
 	private async displayAvailableBuilds(containerEl: HTMLElement, group: Setting | SettingGroup) {
 		const parentEl = group instanceof Setting ? containerEl : group.listEl;
-		const token = this.plugin.settings.token;
+		const token = this.plugin.getToken();
 		const buildsEl = parentEl.createDiv({ cls: "vt-beta-builds" });
 		if (!token) {
 			this.displayEmptyList(buildsEl);
@@ -304,7 +299,7 @@ export class VTBetaHelperSettingTab extends PluginSettingTab {
 		this.displayLoadingIndicator(buildsEl, "Loading builds...");
 
 		try {
-			const result = await cache.fetchBuilds(token, this.currentPage, PAGE_SIZE, async () => {
+			const result = await cache.fetchBuilds(this.currentPage, PAGE_SIZE, async () => {
 				const offset = this.currentPage * PAGE_SIZE;
 				const response = await listBuilds(token, PAGE_SIZE, offset);
 				if (!response.success || response.data.length === 0) {
@@ -566,16 +561,28 @@ export class VTBetaHelperSettingTab extends PluginSettingTab {
 	private displayLicense(parentEl: HTMLElement) {
 		const group = this.createSettingGroup(parentEl, "License");
 		const container = group instanceof Setting ? parentEl : group;
-		this.displayTokenInput(container, true);
 		void this.displaySubscriptionStatus(container);
+	}
+
+	private addSignOutButton(parentEl: HTMLElement) {
+		new ButtonComponent(parentEl)
+			.setButtonText("Sign out")
+			.setWarning()
+			.onClick(async () => {
+				await this.plugin.setToken("");
+				this.plugin.stopUpdateChecker();
+				this.refresh();
+			});
 	}
 
 	private async displaySubscriptionStatus(container: HTMLElement | SettingGroup) {
 		const containerEl = container instanceof HTMLElement ? container : container.listEl;
-		const subscriptionEl = containerEl.createDiv({ cls: "setting-item" });
-		const token = this.plugin.settings.token;
+		const rowEl = containerEl.createDiv({ cls: "setting-item vt-beta-license" });
+		const infoEl = rowEl.createDiv({ cls: "vt-beta-subscription" });
+		this.addSignOutButton(rowEl);
+		const token = this.plugin.getToken();
 
-		this.displayLoadingIndicator(subscriptionEl, "Fetching subscription status...");
+		this.displayLoadingIndicator(infoEl, "Fetching subscription status...");
 
 		try {
 			const subscription = await cache.fetchSubscription(async () => {
@@ -586,27 +593,25 @@ export class VTBetaHelperSettingTab extends PluginSettingTab {
 				return response.data;
 			});
 
-			subscriptionEl.empty();
-			this.renderSubscriptionInfo(subscriptionEl, subscription);
+			infoEl.empty();
+			this.renderSubscriptionInfo(infoEl, rowEl, subscription);
 		} catch (error) {
-			subscriptionEl.empty();
-			const statusEl = subscriptionEl.createDiv({ cls: "vt-beta-subscription" });
-			statusEl.toggleClass("mod-error", true);
-			statusEl.setText("Unable to load subscription: " + e(error));
+			infoEl.empty();
+			infoEl.toggleClass("mod-error", true);
+			infoEl.setText("Unable to load subscription: " + e(error));
 		}
 	}
 
-	private renderSubscriptionInfo(parentEl: HTMLElement, subscription: SubscriptionData) {
-		const statusEl = parentEl.createDiv({ cls: "vt-beta-subscription" });
+	private renderSubscriptionInfo(infoEl: HTMLElement, rowEl: HTMLElement, subscription: SubscriptionData) {
 		const { email, expires_at, valid } = subscription;
 		const expiryDate = parseMoment(expires_at);
 		const expiryDateText = expiryDate.format("L");
 
-		const subscriberEl = statusEl.createDiv({ cls: "vt-beta-subscription-detail" });
+		const subscriberEl = infoEl.createDiv({ cls: "vt-beta-subscription-detail" });
 		subscriberEl.appendText("Issued to ");
 		subscriberEl.createEl("code", { cls: "mod-info", text: email });
 
-		const expiryEl = statusEl.createDiv({ cls: "vt-beta-subscription-detail" });
+		const expiryEl = infoEl.createDiv({ cls: "vt-beta-subscription-detail" });
 		expiryEl.appendText("Valid until ");
 		expiryEl.createEl("code", { cls: "mod-info", text: expiryDateText });
 		if (!valid) {
@@ -617,8 +622,8 @@ export class VTBetaHelperSettingTab extends PluginSettingTab {
 			});
 		}
 
-		const reminderEl = statusEl.createDiv({ cls: "vt-beta-subscription-expiration-reminder" });
 		if (!valid) {
+			const reminderEl = rowEl.createDiv({ cls: "vt-beta-subscription-expiration-reminder" });
 			const deletionDate = expiryDate.clone().add(90, "days");
 			const daysUntilDeletion = deletionDate.diff(parseMoment(), "days");
 			const deletionDateText = deletionDate.format("MMM Do, YYYY");
@@ -635,13 +640,11 @@ export class VTBetaHelperSettingTab extends PluginSettingTab {
 					 on all your devices.`,
 				);
 			}
-		} else {
-			reminderEl.setText("");
 		}
 	}
 
 	getSettingDefinitions(): SettingDefinitionItem[] {
-		if (!this.plugin.settings.token.trim()) {
+		if (!this.plugin.getToken()) {
 			this.currentPage = 0;
 			return this.getWelcomeScreenDefinitions();
 		}

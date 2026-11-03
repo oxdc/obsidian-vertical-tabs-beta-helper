@@ -7,6 +7,7 @@ import { errorToString as e } from "./common/utils";
 import { installLog, installLogError } from "./services/installLog";
 import { ReleaseNoteModal } from "./release_note";
 import { VERTICAL_TABS_BETA_HELPER_ICON } from "./icon";
+import { cache } from "./services/cache";
 
 const MESSAGE_INTERVAL = 10000; // 10 seconds
 const VERTICAL_TABS_ID = "vertical-tabs";
@@ -24,7 +25,7 @@ export default class VTBetaHelper extends Plugin {
 		await this.loadSettings();
 		this.addSettingTab(new VTBetaHelperSettingTab(this.app, this));
 		this.registerObsidianProtocolHandler("vtbetahelper", this.setupHandler.bind(this));
-		if (this.settings.token) this.startUpdateChecker();
+		if (this.getToken()) this.startUpdateChecker();
 	}
 
 	onunload() {
@@ -34,33 +35,30 @@ export default class VTBetaHelper extends Plugin {
 	// Public - Settings
 
 	async loadSettings() {
-		const data = ((await this.loadData()) ?? {}) as Partial<VTBetaHelperSettings>;
-		this.settings = Object.assign({}, DEFAULT_SETTINGS, data, { token: "" });
-		this.settings.token = this.app.secretStorage.getSecret(TOKEN_SECRET_ID) ?? "";
-		await this.migrateLegacyToken(data);
+		const data = ((await this.loadData()) ?? {}) as Partial<VTBetaHelperSettings> & { token?: string };
+		const { token: legacyToken, ...rest } = data;
+		this.settings = Object.assign({}, DEFAULT_SETTINGS, rest);
+		if ("token" in data) await this.migrateLegacyToken(legacyToken ?? "");
 	}
 
 	async saveSettings() {
-		const { token: _token, ...persisted } = this.settings;
-		await this.saveData(persisted);
+		await this.saveData(this.settings);
+	}
+
+	getToken(): string {
+		return this.app.secretStorage.getSecret(TOKEN_SECRET_ID) ?? "";
 	}
 
 	async setToken(token: string) {
 		const normalized = token ? normalizeToken(token) : "";
-		this.settings.token = normalized;
 		this.app.secretStorage.setSecret(TOKEN_SECRET_ID, normalized);
-		await this.saveSettings();
+		cache.invalidate();
 	}
 
 	// Private - Migration
 
-	private async migrateLegacyToken(data: Partial<VTBetaHelperSettings>): Promise<void> {
-		if (!("token" in data)) return;
-		const legacyToken = data.token ?? "";
-		if (!this.settings.token && legacyToken) {
-			await this.setToken(legacyToken);
-			return;
-		}
+	private async migrateLegacyToken(legacyToken: string): Promise<void> {
+		if (!this.getToken() && legacyToken) await this.setToken(legacyToken);
 		await this.saveSettings();
 	}
 
@@ -116,10 +114,11 @@ export default class VTBetaHelper extends Plugin {
 	// Private - Update Checker
 
 	private async checkForUpdates(): Promise<void> {
-		if (!this.settings.token) return;
+		const token = this.getToken();
+		if (!token) return;
 		try {
 			installLog("Checking for updates...");
-			const response = await listBuilds(this.settings.token, 1, 0);
+			const response = await listBuilds(token, 1, 0);
 			if (!response.success || response.data.length === 0) {
 				installLog("No builds returned from server.");
 				return;
@@ -156,11 +155,12 @@ export default class VTBetaHelper extends Plugin {
 	}
 
 	async installVersion(tag: string, manual = false): Promise<void> {
-		if (!this.settings.token) return;
+		const token = this.getToken();
+		if (!token) return;
 		try {
 			new Notice(`Installing Vertical Tabs ${tag}...`, MESSAGE_INTERVAL);
 			const current = this.getCurrentVersion();
-			await install(this.app, current, tag, this.settings.token, manual);
+			await install(this.app, current, tag, token, manual);
 			new Notice(`Vertical Tabs ${tag} installed.`, MESSAGE_INTERVAL);
 		} catch (error) {
 			new Notice("Installation failed: " + e(error), 0);

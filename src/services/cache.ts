@@ -21,32 +21,24 @@ export interface BuildsResult {
 const CACHE_TTL = 60 * 60 * 1000; // 1 hour in milliseconds
 
 class Cache {
-	private builds: Map<string, CacheEntry<BuildData[]>> = new Map();
-	private buildTotals: Map<string, number> = new Map();
+	private builds: Map<number, CacheEntry<BuildData[]>> = new Map();
+	private buildTotal: number | null = null;
 	private subscription: CacheEntry<SubscriptionData> | null = null;
 
 	private isExpired(timestamp: number): boolean {
 		return Date.now() - timestamp > CACHE_TTL;
 	}
 
-	async fetchBuilds(
-		token: string,
-		page: number,
-		pageSize: number,
-		fetchFn: () => Promise<BuildsResult>
-	): Promise<BuildsResult> {
-		const key = `${token}-${page}`;
-		const entry = this.builds.get(key);
-		const cachedTotal = this.buildTotals.get(token);
-		const cacheHit = entry && cachedTotal !== undefined;
-		if (cacheHit && !this.isExpired(entry.timestamp)) {
-			const has_more = (page + 1) * pageSize < cachedTotal;
-			const result = { data: entry.data, total: cachedTotal, has_more };
-			return result;
+	async fetchBuilds(page: number, pageSize: number, fetchFn: () => Promise<BuildsResult>): Promise<BuildsResult> {
+		const entry = this.builds.get(page);
+		const total = this.buildTotal;
+		if (entry && total !== null && !this.isExpired(entry.timestamp)) {
+			const has_more = (page + 1) * pageSize < total;
+			return { data: entry.data, total, has_more };
 		} else {
 			const result = await fetchFn();
-			this.builds.set(key, { data: result.data, timestamp: Date.now() });
-			this.buildTotals.set(token, result.total);
+			this.builds.set(page, { data: result.data, timestamp: Date.now() });
+			this.buildTotal = result.total;
 			return result;
 		}
 	}
@@ -63,7 +55,7 @@ class Cache {
 
 	invalidate(): void {
 		this.builds.clear();
-		this.buildTotals.clear();
+		this.buildTotal = null;
 		this.subscription = null;
 	}
 }

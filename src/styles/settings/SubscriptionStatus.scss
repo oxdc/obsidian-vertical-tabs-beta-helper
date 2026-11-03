@@ -1,3 +1,14 @@
+.setting-item.vt-beta-license {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) auto;
+	align-items: center;
+	column-gap: var(--size-4-4);
+
+	> .vt-beta-subscription-expiration-reminder {
+		grid-column: 1 / -1;
+	}
+}
+
 .vt-beta-subscription-detail {
 	font-size: var(--font-small);
 	padding-bottom: var(--size-2-2);
