@@ -7,7 +7,7 @@ function timestamp(): string {
 }
 
 export function installLog(message: string): void {
-	console.log(`${PREFIX} ${timestamp()} ${message}`);
+	console.debug(`${PREFIX} ${timestamp()} ${message}`);
 }
 
 export function installLogError(message: string, error: unknown): void {

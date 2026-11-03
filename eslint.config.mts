@@ -34,7 +34,6 @@ export default defineConfig(
 			},
 		},
 		rules: {
-			"obsidianmd/rule-custom-message": "off",
 			"obsidianmd/ui/sentence-case": "off",
 		},
 	}

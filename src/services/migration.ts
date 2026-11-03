@@ -71,13 +71,13 @@ export const migrationRegistry = MigrationRegistry.getInstance();
 // prettier-ignore
 export async function runPreinstallationTasks(app: App, fromVersion: string, toVersion: string): Promise<void> {
 	const migrations = await migrationRegistry.queryMigrations(fromVersion, toVersion);
-  console.log(`[Migration] Running pre-installation tasks for ${fromVersion} to ${toVersion}: ${migrations.length} migrations`);
+  console.debug(`[Migration] Running pre-installation tasks for ${fromVersion} to ${toVersion}: ${migrations.length} migrations`);
 	for (const migration of migrations) await migration.preInstallationTasks(app);
 }
 
 // prettier-ignore
 export async function runPostinstallationTasks(app: App, fromVersion: string, toVersion: string): Promise<void> {
 	const migrations = await migrationRegistry.queryMigrations(fromVersion, toVersion);
-	console.log(`[Migration] Running post-installation tasks for ${fromVersion} to ${toVersion}: ${migrations.length} migrations`);
+	console.debug(`[Migration] Running post-installation tasks for ${fromVersion} to ${toVersion}: ${migrations.length} migrations`);
 	for (const migration of migrations) await migration.postInstallationTasks(app);
 }

@@ -66,7 +66,7 @@ export async function migrateGroupVisibilityToIndexDB(): Promise<void> {
 		const ids = new Set<string>([...hiddenGroups, ...collapsedGroups, ...unhideTimes.keys()]);
 
 		if (ids.size === 0) {
-			console.log("[Migration] No group visibility data found in localStorage");
+			console.debug("[Migration] No group visibility data found in localStorage");
 			return;
 		}
 
@@ -90,7 +90,7 @@ export async function migrateGroupVisibilityToIndexDB(): Promise<void> {
 			migrated++;
 		}
 
-		console.log(`[Migration] Migrated visibility state for ${migrated} group(s) to IndexedDB`);
+		console.debug(`[Migration] Migrated visibility state for ${migrated} group(s) to IndexedDB`);
 	} catch (error) {
 		console.error("[Migration] Failed to migrate group visibility to IndexedDB:", error);
 		throw error;
@@ -104,7 +104,7 @@ export async function migrateGroupVisibilityFromIndexDB(): Promise<void> {
 	try {
 		const allMetadata = await getAllGroupMetadata();
 		if (!allMetadata || allMetadata.length === 0) {
-			console.log("[Migration] No group metadata found in IndexedDB");
+			console.debug("[Migration] No group metadata found in IndexedDB");
 			return;
 		}
 
@@ -121,7 +121,7 @@ export async function migrateGroupVisibilityFromIndexDB(): Promise<void> {
 		}
 
 		if (hiddenGroups.length === 0 && collapsedGroups.length === 0 && unhideEntries.length === 0) {
-			console.log("[Migration] No group visibility data found in IndexedDB");
+			console.debug("[Migration] No group visibility data found in IndexedDB");
 			return;
 		}
 
@@ -129,8 +129,8 @@ export async function migrateGroupVisibilityFromIndexDB(): Promise<void> {
 		storage().setItem("collapsed-groups", JSON.stringify(collapsedGroups));
 		storage().setItem("group-unhide-times", JSON.stringify(unhideEntries));
 
-		console.log(
-			`[Migration] Migrated ${hiddenGroups.length} hidden, ${collapsedGroups.length} collapsed, and ${unhideEntries.length} unhide time(s) to localStorage`
+		console.debug(
+			`[Migration] Migrated ${hiddenGroups.length} hidden, ${collapsedGroups.length} collapsed, and ${unhideEntries.length} unhide time(s) to localStorage`,
 		);
 	} catch (error) {
 		console.error("[Migration] Failed to migrate group visibility from IndexedDB:", error);
@@ -146,7 +146,7 @@ export function cleanupGroupVisibilityLocalStorage(): void {
 		storage().removeItem("hidden-groups");
 		storage().removeItem("collapsed-groups");
 		storage().removeItem("group-unhide-times");
-		console.log("[Cleanup] Removed hidden-groups, collapsed-groups, and group-unhide-times from localStorage");
+		console.debug("[Cleanup] Removed hidden-groups, collapsed-groups, and group-unhide-times from localStorage");
 	} catch (error) {
 		console.error("[Cleanup] Failed to cleanup group visibility from localStorage:", error);
 		throw error;
@@ -174,7 +174,7 @@ export async function cleanupGroupVisibilityFromIndexDB(): Promise<void> {
 			cleaned++;
 		}
 
-		console.log(`[Cleanup] Removed visibility fields from ${cleaned} group metadata record(s) in IndexedDB`);
+		console.debug(`[Cleanup] Removed visibility fields from ${cleaned} group metadata record(s) in IndexedDB`);
 	} catch (error) {
 		console.error("[Cleanup] Failed to cleanup group visibility from IndexedDB:", error);
 		throw error;
@@ -190,11 +190,11 @@ migrationRegistry.registerMigration({
 	},
 	order: 1,
 	preInstallationTasks: async (app: App) => {
-		console.log("[Migration] Pre-installation tasks for upgrading from <=0.23.1 to >=0.24.0 (group visibility)");
+		console.debug("[Migration] Pre-installation tasks for upgrading from <=0.23.1 to >=0.24.0 (group visibility)");
 		await migrateGroupVisibilityToIndexDB();
 	},
 	postInstallationTasks: async (app: App) => {
-		console.log("[Migration] Post-installation tasks for upgrading from <=0.23.1 to >=0.24.0 (group visibility)");
+		console.debug("[Migration] Post-installation tasks for upgrading from <=0.23.1 to >=0.24.0 (group visibility)");
 		cleanupGroupVisibilityLocalStorage();
 	},
 });
@@ -208,11 +208,11 @@ migrationRegistry.registerMigration({
 	},
 	order: 1,
 	preInstallationTasks: async (app: App) => {
-		console.log("[Migration] Pre-installation tasks for downgrading from >=0.24.0 to <=0.23.1 (group visibility)");
+		console.debug("[Migration] Pre-installation tasks for downgrading from >=0.24.0 to <=0.23.1 (group visibility)");
 		await migrateGroupVisibilityFromIndexDB();
 	},
 	postInstallationTasks: async (app: App) => {
-		console.log("[Migration] Post-installation tasks for downgrading from >=0.24.0 to <=0.23.1 (group visibility)");
+		console.debug("[Migration] Post-installation tasks for downgrading from >=0.24.0 to <=0.23.1 (group visibility)");
 		await cleanupGroupVisibilityFromIndexDB();
 	},
 });

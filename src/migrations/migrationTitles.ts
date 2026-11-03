@@ -57,7 +57,7 @@ export async function migrateGroupTitlesToIndexDB(): Promise<void> {
 	try {
 		const viewStateKeys = findViewStateKeys();
 		if (viewStateKeys.length === 0) {
-			console.log("[Migration] No view-state keys found in localStorage");
+			console.debug("[Migration] No view-state keys found in localStorage");
 			return;
 		}
 
@@ -79,11 +79,11 @@ export async function migrateGroupTitlesToIndexDB(): Promise<void> {
 
 		if (groupsToMigrate.length > 0) {
 			await bulkPutGroupMetadata(groupsToMigrate);
-			console.log(
+			console.debug(
 				`[Migration] Migrated ${groupsToMigrate.length} group titles to IndexedDB from ${viewStateKeys.length} key(s)`,
 			);
 		} else {
-			console.log("[Migration] No custom group titles to migrate (all were default)");
+			console.debug("[Migration] No custom group titles to migrate (all were default)");
 		}
 	} catch (error) {
 		console.error("[Migration] Failed to migrate group titles:", error);
@@ -105,7 +105,7 @@ export async function migrateGroupTitlesFromIndexDB(): Promise<void> {
 		const allMetadata = await getAllGroupMetadata();
 
 		if (!allMetadata || allMetadata.length === 0) {
-			console.log("[Migration] No group metadata found in IndexedDB");
+			console.debug("[Migration] No group metadata found in IndexedDB");
 			return;
 		}
 
@@ -119,18 +119,18 @@ export async function migrateGroupTitlesFromIndexDB(): Promise<void> {
 		if (entries.length > 0) {
 			const viewStateKeys = findViewStateKeys();
 			if (viewStateKeys.length === 0) {
-				console.log("[Migration] No view-state keys found in localStorage to restore to");
+				console.debug("[Migration] No view-state keys found in localStorage to restore to");
 			} else {
 				const data = JSON.stringify(entries);
 				for (const key of viewStateKeys) {
 					storage().setItem(key, data);
 				}
-				console.log(
+				console.debug(
 					`[Migration] Migrated ${entries.length} group titles to ${viewStateKeys.length} localStorage key(s)`,
 				);
 			}
 		} else {
-			console.log("[Migration] No custom titles found in IndexedDB");
+			console.debug("[Migration] No custom titles found in IndexedDB");
 		}
 	} catch (error) {
 		console.error("[Migration] Failed to migrate group titles from IndexedDB:", error);
@@ -149,7 +149,7 @@ export function cleanupGroupTitlesLocalStorage(): void {
 		for (const key of viewStateKeys) {
 			storage().removeItem(key);
 		}
-		console.log(`[Cleanup] Removed ${viewStateKeys.length} view-state key(s) from localStorage`);
+		console.debug(`[Cleanup] Removed ${viewStateKeys.length} view-state key(s) from localStorage`);
 	} catch (error) {
 		console.error("[Cleanup] Failed to cleanup group titles from localStorage:", error);
 		throw error;
@@ -167,7 +167,7 @@ export async function cleanupIndexDB(): Promise<void> {
 		const request = indexedDB.deleteDatabase("VerticalTabsMetadata");
 
 		request.onsuccess = () => {
-			console.log("[Cleanup] Deleted VerticalTabsMetadata IndexedDB");
+			console.debug("[Cleanup] Deleted VerticalTabsMetadata IndexedDB");
 			resolve();
 		};
 
@@ -193,11 +193,11 @@ migrationRegistry.registerMigration({
 		toVersion: "0.18.0",
 	},
 	preInstallationTasks: async (app: App) => {
-		console.log("[Migration] Pre-installation tasks for upgrading from <=0.17.4 to >=0.18.0");
+		console.debug("[Migration] Pre-installation tasks for upgrading from <=0.17.4 to >=0.18.0");
 		await migrateGroupTitlesToIndexDB();
 	},
 	postInstallationTasks: async (app: App) => {
-		console.log("[Migration] Post-installation tasks for upgrading from <=0.17.4 to >=0.18.0");
+		console.debug("[Migration] Post-installation tasks for upgrading from <=0.17.4 to >=0.18.0");
 		cleanupGroupTitlesLocalStorage();
 	},
 });
@@ -210,11 +210,11 @@ migrationRegistry.registerMigration({
 		toVersion: "0.17.4",
 	},
 	preInstallationTasks: async (app: App) => {
-		console.log("[Migration] Pre-installation tasks for downgrading from >=0.18.0 to <=0.17.4");
+		console.debug("[Migration] Pre-installation tasks for downgrading from >=0.18.0 to <=0.17.4");
 		await migrateGroupTitlesFromIndexDB();
 	},
 	postInstallationTasks: async (app: App) => {
-		console.log("[Migration] Post-installation tasks for downgrading from >=0.18.0 to <=0.17.4");
+		console.debug("[Migration] Post-installation tasks for downgrading from >=0.18.0 to <=0.17.4");
 		await cleanupIndexDB();
 	},
 });

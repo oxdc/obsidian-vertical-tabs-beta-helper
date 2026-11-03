@@ -70,7 +70,7 @@ async function listVaultDatabaseNames(): Promise<string[]> {
 async function writeRecordsToVault(
 	vaultId: string,
 	storeName: MetadataStoreName,
-	records: MetadataRecord[]
+	records: MetadataRecord[],
 ): Promise<number> {
 	if (records.length === 0) return 0;
 	const vaultDb = openDb(getVaultDbName(vaultId));
@@ -93,7 +93,7 @@ export async function migrateMetadataToVaultDatabases(app: App): Promise<void> {
 		]);
 
 		if (tabRecords.length === 0 && groupRecords.length === 0) {
-			console.log("[Migration] No metadata found in legacy IndexedDB to split by vault");
+			console.debug("[Migration] No metadata found in legacy IndexedDB to split by vault");
 			return;
 		}
 
@@ -124,8 +124,8 @@ export async function migrateMetadataToVaultDatabases(app: App): Promise<void> {
 			groupCount += await writeRecordsToVault(vaultId, "groupMetadata", groupByVault.get(vaultId) ?? []);
 		}
 
-		console.log(
-			`[Migration] Migrated ${tabCount} tab and ${groupCount} group metadata record(s) into ${vaultIds.size} vault database(s)`
+		console.debug(
+			`[Migration] Migrated ${tabCount} tab and ${groupCount} group metadata record(s) into ${vaultIds.size} vault database(s)`,
 		);
 	} catch (error) {
 		console.error("[Migration] Failed to migrate metadata to per-vault IndexedDB:", error);
@@ -140,7 +140,7 @@ export async function migrateMetadataFromVaultDatabases(): Promise<void> {
 	try {
 		const vaultDbNames = await listVaultDatabaseNames();
 		if (vaultDbNames.length === 0) {
-			console.log("[Migration] No per-vault IndexedDB databases found to merge");
+			console.debug("[Migration] No per-vault IndexedDB databases found to merge");
 			return;
 		}
 
@@ -167,8 +167,8 @@ export async function migrateMetadataFromVaultDatabases(): Promise<void> {
 			}
 		}
 
-		console.log(
-			`[Migration] Migrated ${tabCount} tab and ${groupCount} group metadata record(s) from ${vaultDbNames.length} vault database(s) to legacy IndexedDB`
+		console.debug(
+			`[Migration] Migrated ${tabCount} tab and ${groupCount} group metadata record(s) from ${vaultDbNames.length} vault database(s) to legacy IndexedDB`,
 		);
 	} catch (error) {
 		console.error("[Migration] Failed to migrate metadata from per-vault IndexedDB:", error);
@@ -179,7 +179,7 @@ export async function migrateMetadataFromVaultDatabases(): Promise<void> {
 export async function cleanupLegacyMetadataDatabase(): Promise<void> {
 	try {
 		await deleteDatabase(LEGACY_DB_NAME);
-		console.log(`[Cleanup] Deleted legacy IndexedDB database "${LEGACY_DB_NAME}"`);
+		console.debug(`[Cleanup] Deleted legacy IndexedDB database "${LEGACY_DB_NAME}"`);
 	} catch (error) {
 		console.error("[Cleanup] Failed to delete legacy IndexedDB database:", error);
 		throw error;
@@ -192,7 +192,7 @@ export async function cleanupVaultMetadataDatabases(): Promise<void> {
 		for (const dbName of vaultDbNames) {
 			await deleteDatabase(dbName);
 		}
-		console.log(`[Cleanup] Deleted ${vaultDbNames.length} per-vault IndexedDB database(s)`);
+		console.debug(`[Cleanup] Deleted ${vaultDbNames.length} per-vault IndexedDB database(s)`);
 	} catch (error) {
 		console.error("[Cleanup] Failed to delete per-vault IndexedDB databases:", error);
 		throw error;
@@ -208,13 +208,13 @@ migrationRegistry.registerMigration({
 	},
 	order: 2,
 	preInstallationTasks: async (app: App) => {
-		console.log(
+		console.debug(
 			"[Migration] Pre-installation tasks for upgrading from <=0.23.1 to >=0.24.0 (vault IndexedDB)"
 		);
 		await migrateMetadataToVaultDatabases(app);
 	},
 	postInstallationTasks: async (app: App) => {
-		console.log(
+		console.debug(
 			"[Migration] Post-installation tasks for upgrading from <=0.23.1 to >=0.24.0 (vault IndexedDB)"
 		);
 		await cleanupLegacyMetadataDatabase();
@@ -230,13 +230,13 @@ migrationRegistry.registerMigration({
 	},
 	order: 2,
 	preInstallationTasks: async (app: App) => {
-		console.log(
+		console.debug(
 			"[Migration] Pre-installation tasks for downgrading from >=0.24.0 to <=0.23.1 (vault IndexedDB)"
 		);
 		await migrateMetadataFromVaultDatabases();
 	},
 	postInstallationTasks: async (app: App) => {
-		console.log(
+		console.debug(
 			"[Migration] Post-installation tasks for downgrading from >=0.24.0 to <=0.23.1 (vault IndexedDB)"
 		);
 		await cleanupVaultMetadataDatabases();
