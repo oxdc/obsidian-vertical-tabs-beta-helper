@@ -236,8 +236,27 @@ export class VTBetaHelperSettingTab extends PluginSettingTab {
 		const containerEl = parentEl.createDiv({ cls: "vt-beta-welcome" });
 		this.displayHeader(containerEl, WELCOME_SCREEN_HEADER);
 		this.displayTokenInput(containerEl);
+		this.displaySubscribePrompt(containerEl);
 		this.displayDocLinks(containerEl);
 		this.displayFooter(containerEl, WELCOME_SCREEN_FOOTER);
+	}
+
+	private displaySubscribePrompt(parentEl: HTMLElement) {
+		this.createSetting(parentEl, (setting) => {
+			setting
+				.setName("Don't have access to the beta program yet?")
+				.setDesc(
+					`*Cancel anytime. You only need an active subscription to download new beta versions.
+					 Once a version is installed, you can keep using it for as long as you want.`,
+				)
+				.setClass("vt-beta-subscribe")
+				.addButton((button) => {
+					button
+						.setButtonText("Subscribe now")
+						.setCta()
+						.onClick(() => window.open("https://ko-fi.com/oxdcq", "_blank", "noopener,noreferrer"));
+				});
+		});
 	}
 
 	// Settings screen

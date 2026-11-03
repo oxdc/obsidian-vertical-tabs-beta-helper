@@ -65,6 +65,12 @@
 			width: unset !important;
 		}
 	}
+}
+
+.vt-beta-welcome .vt-beta-token,
+.vt-beta-welcome .vt-beta-subscribe {
+	border: none !important;
+	background: none !important;
 
 	&:before {
 		content: none;
@@ -72,9 +78,8 @@
 	}
 }
 
-.vt-beta-welcome .vt-beta-token {
-	border: none !important;
-	background: none !important;
+.vt-beta-subscribe button {
+	width: fit-content;
 }
 
 /* Beta tag */
