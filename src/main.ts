@@ -10,6 +10,7 @@ import { VERTICAL_TABS_BETA_HELPER_ICON } from "./icon";
 
 const MESSAGE_INTERVAL = 10000; // 10 seconds
 const VERTICAL_TABS_ID = "vertical-tabs";
+const TOKEN_SECRET_ID = "vertical-tabs-beta-token";
 const HOUR = 1000 * 60 * 60;
 
 export default class VTBetaHelper extends Plugin {
@@ -33,11 +34,34 @@ export default class VTBetaHelper extends Plugin {
 	// Public - Settings
 
 	async loadSettings() {
-		this.settings = Object.assign({}, DEFAULT_SETTINGS, (await this.loadData()) as VTBetaHelperSettings);
+		const data = ((await this.loadData()) ?? {}) as Partial<VTBetaHelperSettings>;
+		this.settings = Object.assign({}, DEFAULT_SETTINGS, data, { token: "" });
+		this.settings.token = this.app.secretStorage.getSecret(TOKEN_SECRET_ID) ?? "";
+		await this.migrateLegacyToken(data);
 	}
 
 	async saveSettings() {
-		await this.saveData(this.settings);
+		const { token: _token, ...persisted } = this.settings;
+		await this.saveData(persisted);
+	}
+
+	async setToken(token: string) {
+		const normalized = token ? normalizeToken(token) : "";
+		this.settings.token = normalized;
+		this.app.secretStorage.setSecret(TOKEN_SECRET_ID, normalized);
+		await this.saveSettings();
+	}
+
+	// Private - Migration
+
+	private async migrateLegacyToken(data: Partial<VTBetaHelperSettings>): Promise<void> {
+		if (!("token" in data)) return;
+		const legacyToken = data.token ?? "";
+		if (!this.settings.token && legacyToken) {
+			await this.setToken(legacyToken);
+			return;
+		}
+		await this.saveSettings();
 	}
 
 	// Public - Setup Handler
@@ -49,8 +73,7 @@ export default class VTBetaHelper extends Plugin {
 		if (typeof accessToken === "string" && accessToken.trim()) {
 			const { isValid, errorMessage } = await validateToken(accessToken);
 			if (isValid) {
-				this.settings.token = normalizeToken(accessToken);
-				await this.saveSettings();
+				await this.setToken(accessToken);
 				this.startUpdateChecker();
 			} else {
 				new Notice(errorMessage, MESSAGE_INTERVAL);

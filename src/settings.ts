@@ -170,8 +170,7 @@ export class VTBetaHelperSettingTab extends PluginSettingTab {
 		let inputEl: HTMLInputElement | null;
 
 		const removeToken = async () => {
-			this.plugin.settings.token = "";
-			await this.plugin.saveSettings();
+			await this.plugin.setToken("");
 			this.plugin.stopUpdateChecker();
 			this.refresh();
 		};
@@ -181,8 +180,7 @@ export class VTBetaHelperSettingTab extends PluginSettingTab {
 			const { isValid, errorMessage } = await validateToken(token);
 			textEl?.setDisabled(false);
 			if (isValid) {
-				this.plugin.settings.token = token;
-				await this.plugin.saveSettings();
+				await this.plugin.setToken(token);
 				this.plugin.startUpdateChecker();
 				this.refresh();
 			} else {
